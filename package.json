@@ -1,0 +1,21 @@
+{
+  "name": "websocket-openai",
+  "version": "0.0.1",
+  "author": "Katsumi Takahashi",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "test": "npx tap"
+  },
+  "description": "",
+  "dependencies": {
+    "@fastify/formbody": "^8.0.2",
+    "@fastify/websocket": "^11.0.2",
+    "dotenv": "^16.4.5",
+    "fastify": "^5.2.1"
+  },
+  "devDependencies": {
+    "tap": "^21.0.1"
+  }
+}

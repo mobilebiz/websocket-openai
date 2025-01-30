@@ -1,0 +1,14 @@
+TAP version 14
+# Subtest: pcm24To16 should convert 24kHz PCM to 16kHz PCM
+    ok 1 - Output buffer length should be correct
+    ok 2 - First sample should match
+    ok 3 - Third sample should match
+    1..3
+ok 1 - pcm24To16 should convert 24kHz PCM to 16kHz PCM # time=2.498ms
+
+# Subtest: pcm24To16 should throw an error for invalid buffer length
+    ok 1 - Should throw error for invalid buffer length
+    1..1
+ok 2 - pcm24To16 should throw an error for invalid buffer length # time=1.465ms
+
+1..2
