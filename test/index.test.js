@@ -19,6 +19,14 @@ tap.test('Fastify server', async t => {
     reply.send({ message: 'Vonage Voiceサーバーが稼働中です。' });
   });
 
+  fastify.get('/_/health', async (request, reply) => {
+    reply.send('OK');
+  });
+
+  fastify.get('/_/metrics', async (request, reply) => {
+    reply.send('OK');
+  });
+
   // Event webhook
   fastify.all('/event', async (request, reply) => {
     console.log(JSON.stringify(request.body, null, 2));
@@ -59,6 +67,26 @@ tap.test('Fastify server', async t => {
 
     t.equal(response.statusCode, 200, 'returns a status code of 200');
     t.same(response.json(), { message: 'Vonage Voiceサーバーが稼働中です。' }, 'returns the correct message');
+  });
+
+  t.test('GET /_/health', async t => {
+    const response = await fastify.inject({
+      method: 'GET',
+      url: '/_/health'
+    });
+
+    t.equal(response.statusCode, 200, 'returns a status code of 200');
+    t.same(response.body, 'OK', 'returns the correct message');
+  });
+
+  t.test('GET /_/metrics', async t => {
+    const response = await fastify.inject({
+      method: 'GET',
+      url: '/_/metrics'
+    });
+
+    t.equal(response.statusCode, 200, 'returns a status code of 200');
+    t.same(response.body, 'OK', 'returns the correct message');
   });
 
   t.test('POST /event', async t => {

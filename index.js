@@ -7,9 +7,9 @@ import { pcm24To16 } from './lib/audio-converter.js';
 
 dotenv.config();
 
-const { OPENAI_API_KEY, OPENAI_MODEL } = process.env;
+const { OPENAI_API_KEY, OPENAI_MODEL, SERVER_URL } = process.env;
 
-if (!OPENAI_MODEL || !OPENAI_API_KEY) {
+if (!OPENAI_MODEL || !OPENAI_API_KEY || !SERVER_URL) {
   console.error('環境変数が不足しています。 .envファイルで設定してください。');
   process.exit(1);
 }
@@ -18,8 +18,8 @@ const fastify = Fastify();
 fastify.register(fastifyFormBody);
 fastify.register(fastifyWs);
 
-const PORT = process.env.PORT || 5050;
-let SERVER = "";
+console.debug(`VCR_PORT: ${process.env.VCR_PORT}`);
+const PORT = process.env.VCR_PORT || process.env.PORT || 3000;
 
 const LOG_EVENT_TYPES = [
   'response.content.done',
@@ -40,10 +40,19 @@ const LOG_EVENT_TYPES = [
 
 let wsOpenAiOpened = false;
 
-const SYSTEM_MESSAGE = 'あなたは明るくフレンドリーなAIアシスタントです。ユーザーが興味を持っている話題について会話し、適切な情報を提供します。ジョークや楽しい話題を交えながら、常にポジティブでいてください。';
+const SYSTEM_MESSAGE = 'あなたは明るくフレンドリーなAIアシスタントです。ユーザーが興味を持っている話題について会話し、適切な情報を提供します。ジョークや楽しい話題を交えながら、常にポジティブでいてください。なお、会話はすべて日本語で行いますが、ユーザーが言語を指定した場合は、その言語で回答をしてください。';
+// const SYSTEM_MESSAGE = 'You are a bright and friendly AI assistant. You converse about topics of interest to the user and provide relevant information. Stay positive at all times with jokes and fun topics.';
 
 fastify.get('/', async (request, reply) => {
   reply.send({ message: 'Vonage Voiceサーバーが稼働中です。' });
+});
+
+fastify.get('/_/health', async (request, reply) => {
+  reply.send('OK');
+});
+
+fastify.get('/_/metrics', async (request, reply) => {
+  reply.send('OK');
 });
 
 fastify.all('/event', async (request, reply) => {
@@ -53,8 +62,7 @@ fastify.all('/event', async (request, reply) => {
 
 // 着信コールの処理ルート
 fastify.all('/incoming-call', async (request, reply) => {
-  SERVER = request.hostname;
-  console.log(`🐞 /incoming-call called. ${SERVER}`);
+  console.log(`🐞 /incoming-call called. ${SERVER_URL}`);
   const nccoResponse = [
     {
       action: 'talk',
@@ -66,7 +74,7 @@ fastify.all('/incoming-call', async (request, reply) => {
       endpoint: [
         {
           type: 'websocket',
-          uri: `wss://${SERVER}/media-stream`,
+          uri: `wss://${SERVER_URL}/media-stream`,
           contentType: 'audio/l16;rate=16000',
         }
       ]
@@ -112,7 +120,6 @@ fastify.register(async (fastify) => {
       console.log('OpenAI Realtime APIに接続しました');
       setTimeout(sendSessionUpdate, 250); // コネクションの開設を.25秒待つ
       console.log('OpenAI の準備が整いました。');
-
     });
 
     // Vonageから受信
@@ -155,21 +162,21 @@ fastify.register(async (fastify) => {
         if (response.type === 'conversation.item.created' && response.item.role === 'assistant') {
           conversationItemId = response.item.id;
         }
-        // if (response.type === 'input_audio_buffer.speech_started' && conversationItemId) {
-        //   console.log(`conversation cancel: ${responseId}, ${conversationItemId}`);
-        // openAiWs.send(JSON.stringify({
-        //   type: 'response.cancel',
-        //   response_id: responseId
-        // }));
-        // openAiWs.send(JSON.stringify({
-        //   type: 'conversation.item.truncate',
-        //   item_id: conversationItemId,
-        //   content_index: 0,
-        //   audio_end_ms: 150
-        // }));
-        //   responseId = null;
-        //   conversationItemId = null;
-        // }
+        if (response.type === 'input_audio_buffer.speech_started' && conversationItemId) {
+          console.log(`conversation cancel: ${conversationItemId}`);
+          // openAiWs.send(JSON.stringify({
+          //   type: 'conversation.item.truncate',
+          //   item_id: conversationItemId,
+          //   content_index: 0,
+          //   audio_end_ms: 0
+          // }));
+          // openAiWs.send(JSON.stringify({
+          //   type: 'response.cancel',
+          //   response_id: responseId
+          // }));
+          //   responseId = null;
+          conversationItemId = null;
+        }
         if (response.type === 'response.audio.delta' && response.delta) {
           const pcmBuffer = Buffer.from(response.delta, 'base64');
 

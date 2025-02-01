@@ -6,7 +6,9 @@
   "type": "module",
   "scripts": {
     "start": "node index.js",
-    "test": "npx tap"
+    "test": "npx tap",
+    "debug": "vcr debug",
+    "deploy": "vcr deploy"
   },
   "description": "",
   "dependencies": {

@@ -50,6 +50,13 @@ cp .env.example .env
 ```
 
 `.env`を設定する。
+
+キー|値
+:--|:--
+SERVER_URL|ngrokで払い出されたURL（https://は除く）
+OPENAI_API_KEY|OpeAIのシークレットキー（sk-から始まる文字列）
+OPENAI_MODEL|gpt-4o-mini-realtime-preview-2024-12-17
+
 `.env`を読み込むために npm run start を Ctrl-c で終了させ、再度 npm run start で起動。
 
 ngrok を起動するたびに払い出される URL が異なるため、ngrok を再起動した場合は上記手順を繰り返す。
@@ -57,6 +64,18 @@ ngrok を起動するたびに払い出される URL が異なるため、ngrok 
 Vonage のダッシュボードから、作成したアプリケーションの設定画面を開き、**回答 URL** に ``ngrok の URL/incoming-call`` を設定、メソッドは`POST`。
 同じく、**イベント URL** に ``ngrok の URL/event`` を設定、メソッドは`POST`。
 
-### 実行
+### テスト
 
-アプリケーションにリンクした電話番号に電話をして、AIによる回答が戻って来ることを確認する。
+ngrokが起動しアプリケーションも起動していることを確認したら、アプリケーションにリンクした電話番号に電話をして、AIによる回答が戻って来ることを確認する。
+
+## VCR環境のセットアップ
+
+VCR環境を使って、Vonage上にアプリケーションをデプロイすることができます。
+
+### VCR CLIのインストール
+
+[VCRアプリケーションをローカル環境で開発しよう](https://zenn.dev/kwcplus/articles/how-to-develop-vcr-on-local)
+
+### VCR セットアップ
+
+アプリケーションフォルダに移動して、以下のコマンドでVCRをセットアップしていきます。
