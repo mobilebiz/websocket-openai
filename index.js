@@ -7,10 +7,11 @@ import { pcm24To16 } from './lib/audio-converter.js';
 
 dotenv.config();
 
-const { OPENAI_API_KEY, OPENAI_MODEL, SERVER_URL } = process.env;
+const { OPENAI_MODEL, SERVER_URL } = process.env;
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY_SECRET || process.env.OPENAI_API_KEY;
 
-if (!OPENAI_MODEL || !OPENAI_API_KEY || !SERVER_URL) {
-  console.error('環境変数が不足しています。 .envファイルで設定してください。');
+if (!OPENAI_MODEL || !SERVER_URL || !OPENAI_API_KEY) {
+  console.error('環境変数が不足しています。 .envファイル、もしくはvcr.ymlで設定してください。');
   process.exit(1);
 }
 
@@ -26,6 +27,8 @@ const LOG_EVENT_TYPES = [
   // 'rate_limits.updated',
   'response.created',
   'response.done',
+  // 'response.function_call_arguments.delta',
+  'response.function_call_arguments.done',
   'input_audio_buffer.committed',
   'input_audio_buffer.speech_stopped',
   'input_audio_buffer.speech_started',
@@ -109,6 +112,28 @@ fastify.register(async (fastify) => {
           instructions: SYSTEM_MESSAGE,
           modalities: ["text", "audio"],
           temperature: 0.8,
+          tools: [
+            {
+              type: "function",
+              name: "get_weather",
+              description: "指定された場所と日付の天気を取得します",
+              parameters: {
+                type: "object",
+                properties: {
+                  location: {
+                    type: "string",
+                    description: "都道府県や市区町村の名前, e.g. 東京都大田区"
+                  },
+                  date: {
+                    type: "string",
+                    description: "The date in YYYY-MM-DD format, e.g. 2025/02/03"
+                  }
+                },
+                required: ["location", "date"]
+              }
+            }
+          ],
+          tool_choice: 'auto',
         }
       };
       openAiWs.send(JSON.stringify(sessionUpdate));
@@ -164,17 +189,12 @@ fastify.register(async (fastify) => {
         }
         if (response.type === 'input_audio_buffer.speech_started' && conversationItemId) {
           console.log(`conversation cancel: ${conversationItemId}`);
-          // openAiWs.send(JSON.stringify({
-          //   type: 'conversation.item.truncate',
-          //   item_id: conversationItemId,
-          //   content_index: 0,
-          //   audio_end_ms: 0
-          // }));
-          // openAiWs.send(JSON.stringify({
-          //   type: 'response.cancel',
-          //   response_id: responseId
-          // }));
-          //   responseId = null;
+          openAiWs.send(JSON.stringify({
+            type: 'conversation.item.truncate',
+            item_id: conversationItemId,
+            content_index: 0,
+            audio_end_ms: 0
+          }));
           conversationItemId = null;
         }
         if (response.type === 'response.audio.delta' && response.delta) {
@@ -188,6 +208,24 @@ fastify.register(async (fastify) => {
               const pcmDecoded = pcm24To16(chunk);
               connection.send(Buffer.from(pcmDecoded, 'base64'));
             }
+          }
+        }
+        if (response.type === 'response.function_call_arguments.done') {
+          if (response.name === 'get_weather') {
+            const { location, date } = JSON.parse(response.arguments);
+            const item = {
+              type: 'conversation.item.create',
+              item: {
+                type: 'function_call_output',
+                call_id: response.call_id,
+                output: JSON.stringify(`${location}の${date}の天気は晴れです。`)
+              }
+            }
+            console.log(`🐞 function call completed.`);
+            openAiWs.send(JSON.stringify(item));
+            openAiWs.send(JSON.stringify({
+              type: 'response.create',
+            }));
           }
         }
         if (response.type === 'error') {
@@ -215,7 +253,7 @@ fastify.register(async (fastify) => {
   });
 });
 
-fastify.listen({ port: PORT }, (err) => {
+fastify.listen({ port: PORT, host: '0.0.0.0' }, (err) => {
   if (err) {
     console.error(err);
     process.exit(1);
