@@ -4,22 +4,34 @@ TAP version 14
         ok 1 - returns a status code of 200
         ok 2 - returns the correct message
         1..2
-    ok 1 - GET / # time=12.237ms
+    ok 1 - GET / # time=11.965ms
+    
+    # Subtest: GET /_/health
+        ok 1 - returns a status code of 200
+        ok 2 - returns the correct message
+        1..2
+    ok 2 - GET /_/health # time=1.017ms
+    
+    # Subtest: GET /_/metrics
+        ok 1 - returns a status code of 200
+        ok 2 - returns the correct message
+        1..2
+    ok 3 - GET /_/metrics # time=0.671ms
     
 [90mundefined[39m
     # Subtest: POST /event
         ok 1 - returns a status code of 200
         ok 2 - returns the correct message
         1..2
-    ok 2 - POST /event # time=1.825ms
+    ok 4 - POST /event # time=1.184ms
     
     # Subtest: POST /incoming-call
         ok 1 - returns a status code of 200
         ok 2 - returns the correct NCCO response
         1..2
-    ok 3 - POST /incoming-call # time=1.363ms
+    ok 5 - POST /incoming-call # time=1.171ms
     
-    1..3
-ok 1 - Fastify server # time=36.539ms
+    1..5
+ok 1 - Fastify server # time=38.599ms
 
 1..1

@@ -7,10 +7,11 @@ import { pcm24To16 } from './lib/audio-converter.js';
 
 dotenv.config();
 
-const { OPENAI_API_KEY, OPENAI_MODEL } = process.env;
+const { OPENAI_MODEL, SERVER_URL } = process.env;
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY_SECRET || process.env.OPENAI_API_KEY;
 
-if (!OPENAI_MODEL || !OPENAI_API_KEY) {
-  console.error('環境変数が不足しています。 .envファイルで設定してください。');
+if (!OPENAI_MODEL || !SERVER_URL || !OPENAI_API_KEY) {
+  console.error('環境変数が不足しています。 .envファイル、もしくはvcr.ymlで設定してください。');
   process.exit(1);
 }
 
@@ -18,14 +19,16 @@ const fastify = Fastify();
 fastify.register(fastifyFormBody);
 fastify.register(fastifyWs);
 
-const PORT = process.env.PORT || 5050;
-let SERVER = "";
+console.debug(`VCR_PORT: ${process.env.VCR_PORT}`);
+const PORT = process.env.VCR_PORT || process.env.PORT || 3000;
 
 const LOG_EVENT_TYPES = [
   'response.content.done',
   // 'rate_limits.updated',
   'response.created',
   'response.done',
+  // 'response.function_call_arguments.delta',
+  'response.function_call_arguments.done',
   'input_audio_buffer.committed',
   'input_audio_buffer.speech_stopped',
   'input_audio_buffer.speech_started',
@@ -40,10 +43,19 @@ const LOG_EVENT_TYPES = [
 
 let wsOpenAiOpened = false;
 
-const SYSTEM_MESSAGE = 'あなたは明るくフレンドリーなAIアシスタントです。ユーザーが興味を持っている話題について会話し、適切な情報を提供します。ジョークや楽しい話題を交えながら、常にポジティブでいてください。';
+const SYSTEM_MESSAGE = 'あなたは明るくフレンドリーなAIアシスタントです。ユーザーが興味を持っている話題について会話し、適切な情報を提供します。ジョークや楽しい話題を交えながら、常にポジティブでいてください。なお、会話はすべて日本語で行いますが、ユーザーが言語を指定した場合は、その言語で回答をしてください。';
+// const SYSTEM_MESSAGE = 'You are a bright and friendly AI assistant. You converse about topics of interest to the user and provide relevant information. Stay positive at all times with jokes and fun topics.';
 
 fastify.get('/', async (request, reply) => {
   reply.send({ message: 'Vonage Voiceサーバーが稼働中です。' });
+});
+
+fastify.get('/_/health', async (request, reply) => {
+  reply.send('OK');
+});
+
+fastify.get('/_/metrics', async (request, reply) => {
+  reply.send('OK');
 });
 
 fastify.all('/event', async (request, reply) => {
@@ -53,8 +65,7 @@ fastify.all('/event', async (request, reply) => {
 
 // 着信コールの処理ルート
 fastify.all('/incoming-call', async (request, reply) => {
-  SERVER = request.hostname;
-  console.log(`🐞 /incoming-call called. ${SERVER}`);
+  console.log(`🐞 /incoming-call called. ${SERVER_URL}`);
   const nccoResponse = [
     {
       action: 'talk',
@@ -66,7 +77,7 @@ fastify.all('/incoming-call', async (request, reply) => {
       endpoint: [
         {
           type: 'websocket',
-          uri: `wss://${SERVER}/media-stream`,
+          uri: `wss://${SERVER_URL}/media-stream`,
           contentType: 'audio/l16;rate=16000',
         }
       ]
@@ -101,6 +112,28 @@ fastify.register(async (fastify) => {
           instructions: SYSTEM_MESSAGE,
           modalities: ["text", "audio"],
           temperature: 0.8,
+          tools: [
+            {
+              type: "function",
+              name: "get_weather",
+              description: "指定された場所と日付の天気を取得します",
+              parameters: {
+                type: "object",
+                properties: {
+                  location: {
+                    type: "string",
+                    description: "都道府県や市区町村の名前, e.g. 東京都大田区"
+                  },
+                  date: {
+                    type: "string",
+                    description: "The date in YYYY-MM-DD format, e.g. 2025/02/03"
+                  }
+                },
+                required: ["location", "date"]
+              }
+            }
+          ],
+          tool_choice: 'auto',
         }
       };
       openAiWs.send(JSON.stringify(sessionUpdate));
@@ -112,7 +145,6 @@ fastify.register(async (fastify) => {
       console.log('OpenAI Realtime APIに接続しました');
       setTimeout(sendSessionUpdate, 250); // コネクションの開設を.25秒待つ
       console.log('OpenAI の準備が整いました。');
-
     });
 
     // Vonageから受信
@@ -155,21 +187,16 @@ fastify.register(async (fastify) => {
         if (response.type === 'conversation.item.created' && response.item.role === 'assistant') {
           conversationItemId = response.item.id;
         }
-        // if (response.type === 'input_audio_buffer.speech_started' && conversationItemId) {
-        //   console.log(`conversation cancel: ${responseId}, ${conversationItemId}`);
-        // openAiWs.send(JSON.stringify({
-        //   type: 'response.cancel',
-        //   response_id: responseId
-        // }));
-        // openAiWs.send(JSON.stringify({
-        //   type: 'conversation.item.truncate',
-        //   item_id: conversationItemId,
-        //   content_index: 0,
-        //   audio_end_ms: 150
-        // }));
-        //   responseId = null;
-        //   conversationItemId = null;
-        // }
+        if (response.type === 'input_audio_buffer.speech_started' && conversationItemId) {
+          console.log(`conversation cancel: ${conversationItemId}`);
+          openAiWs.send(JSON.stringify({
+            type: 'conversation.item.truncate',
+            item_id: conversationItemId,
+            content_index: 0,
+            audio_end_ms: 0
+          }));
+          conversationItemId = null;
+        }
         if (response.type === 'response.audio.delta' && response.delta) {
           const pcmBuffer = Buffer.from(response.delta, 'base64');
 
@@ -181,6 +208,24 @@ fastify.register(async (fastify) => {
               const pcmDecoded = pcm24To16(chunk);
               connection.send(Buffer.from(pcmDecoded, 'base64'));
             }
+          }
+        }
+        if (response.type === 'response.function_call_arguments.done') {
+          if (response.name === 'get_weather') {
+            const { location, date } = JSON.parse(response.arguments);
+            const item = {
+              type: 'conversation.item.create',
+              item: {
+                type: 'function_call_output',
+                call_id: response.call_id,
+                output: JSON.stringify(`${location}の${date}の天気は晴れです。`)
+              }
+            }
+            console.log(`🐞 function call completed.`);
+            openAiWs.send(JSON.stringify(item));
+            openAiWs.send(JSON.stringify({
+              type: 'response.create',
+            }));
           }
         }
         if (response.type === 'error') {
@@ -208,7 +253,7 @@ fastify.register(async (fastify) => {
   });
 });
 
-fastify.listen({ port: PORT }, (err) => {
+fastify.listen({ port: PORT, host: '0.0.0.0' }, (err) => {
   if (err) {
     console.error(err);
     process.exit(1);
