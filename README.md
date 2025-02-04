@@ -79,3 +79,79 @@ VCR環境を使って、Vonage上にアプリケーションをデプロイす�
 ### VCR セットアップ
 
 アプリケーションフォルダに移動して、以下のコマンドでVCRをセットアップしていきます。
+
+```sh
+vcr init
+? Enter your project name: websocket-openai
+? Enter your Instance name: dev
+? Select a runtime: nodejs22
+? Select a region: AWS - Asia Pacific (Singapore) - (aws.apse1)
+? Select your Vonage application ID for deployment: websocket-openai - (8a000223-9f1e-48d2-9a51-d97adc05a86d)
+? Select your Vonage application ID for debug: websocket-openai - (8a000223-9f1e-48d2-9a51-d97adc05a86d)
+? Select a product template for runtime nodejs22:   [Use arrows to move, type to filter]
+> SKIP
+  Starter Project
+  Advanced Masked Calling
+  Basic Masked Calling 
+  Branded Calling
+  Bulk SMS Queuing
+  Call N Test Scheduler
+```
+
+### **重要！**
+
+`Select a product template for runtime nodejs22:`の選択で、必ず`SKIP`を選択します。
+他のテンプレートを選択してしまうと、現在の`index.js`が上書きされてしまいます。
+
+### vcr.ymlの修正
+
+作成された`vcr.yml`の中の`environment`を以下のように修正します。
+`SERVER_URL`の値は、xxxxxxxxxの部分をご自分のVonage API Keyの値に変更してください。
+
+```yml
+project:
+    name: websocket-openai
+instance:
+    name: dev
+    runtime: nodejs22
+    region: aws.apse1
+    application-id: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+    environment:
+        - name: ENV_VAR
+          value: websocket-openai
+        - name: SERVER_URL
+          value: neru-xxxxxxxx-websocket-openai-dev.apse1.runtime.vonage.cloud
+        - name: OPENAI_API_KEY_SECRET
+          value: OPENAI_API_KEY
+        - name: OPENAI_MODEL
+          value: gpt-4o-mini-realtime-preview-2024-12-17
+    entrypoint:
+        - node
+        - index.js
+debug:
+    name: debug
+    application-id: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+    entrypoint:
+        - nodemon
+        - --inspect
+        - index.js
+```
+
+### OpenAI API Key を VCR Secret に保存
+
+VCR Secretを使って、機密情報を安全に保存します。  
+以下のコマンドを使って、OpenAIのAPI Keyを格納します。
+
+```sh
+vcr secret create --name OPENAI_API_KEY --value sk-から始まる文字列
+```
+
+### VCR デバッグモードで起動
+
+以下のコマンドでローカル起動ができます。
+
+```sh
+npm run debug
+```
+
+デバッグモードで起動するときは、`vcr.yml`の`SERVER_URL`をデバッグモードの値に変更してください。
