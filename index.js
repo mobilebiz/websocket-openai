@@ -172,7 +172,7 @@ fastify.register(async (fastify) => {
     });
 
     // OpenAIから受信
-    openAiWs.on('message', (data) => {
+    openAiWs.on('message', async (data) => {
       try {
         const response = JSON.parse(data);
         if (LOG_EVENT_TYPES.includes(response.type)) {
@@ -199,6 +199,7 @@ fastify.register(async (fastify) => {
         }
         if (response.type === 'response.audio.delta' && response.delta) {
           const pcmBuffer = Buffer.from(response.delta, 'base64');
+          console.log(`🐞 pcmBuffer length: ${pcmBuffer.length}`);
 
           // 960バイトに分割 (24kHz・16bit・20msフレーム = 960 bytes)
           for (let i = 0; i < pcmBuffer.length; i += 960) {
