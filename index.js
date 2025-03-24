@@ -42,6 +42,7 @@ const LOG_EVENT_TYPES = [
 ];
 
 let wsOpenAiOpened = false;
+let isProcessingAudio = true;
 
 const SYSTEM_MESSAGE = 'あなたは明るくフレンドリーなAIアシスタントです。ユーザーが興味を持っている話題について会話し、適切な情報を提供します。ジョークや楽しい話題を交えながら、常にポジティブでいてください。なお、会話はすべて日本語で行いますが、ユーザーが言語を指定した場合は、その言語で回答をしてください。';
 // const SYSTEM_MESSAGE = 'You are a bright and friendly AI assistant. You converse about topics of interest to the user and provide relevant information. Stay positive at all times with jokes and fun topics.';
@@ -188,18 +189,31 @@ fastify.register(async (fastify) => {
           conversationItemId = response.item.id;
         }
         if (response.type === 'input_audio_buffer.speech_started' && conversationItemId) {
-          console.log(`conversation cancel: ${conversationItemId}`);
+          console.log(`👋 conversation cancel: ${conversationItemId}`);
+          isProcessingAudio = false; // 音声処理を一時停止
+
+          // 1. 中断リクエストを送信
           openAiWs.send(JSON.stringify({
             type: 'conversation.item.truncate',
             item_id: conversationItemId,
             content_index: 0,
             audio_end_ms: 0
           }));
+
+          // 2. 新しいレスポンスを強制的に作成する
+          openAiWs.send(JSON.stringify({
+            type: 'response.create'
+          }));
+
           conversationItemId = null;
         }
-        if (response.type === 'response.audio.delta' && response.delta) {
+        if (response.type === 'conversation.item.truncated') {
+          console.log('会話アイテムが正常に中断されました');
+          // 必要に応じて新しい会話を開始
+          isProcessingAudio = true;
+        }
+        if (response.type === 'response.audio.delta' && response.delta && isProcessingAudio) {
           const pcmBuffer = Buffer.from(response.delta, 'base64');
-          console.log(`🐞 pcmBuffer length: ${pcmBuffer.length}`);
 
           // 960バイトに分割 (24kHz・16bit・20msフレーム = 960 bytes)
           for (let i = 0; i < pcmBuffer.length; i += 960) {
