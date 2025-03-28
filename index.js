@@ -70,7 +70,7 @@ fastify.all('/incoming-call', async (request, reply) => {
   const nccoResponse = [
     {
       action: 'talk',
-      text: '少々お待ちください。',
+      text: '担当者にお繋ぎいたしますので、このまま少々お待ちください。',
       language: 'ja-JP'
     },
     {
@@ -146,7 +146,24 @@ fastify.register(async (fastify) => {
       console.log('OpenAI Realtime APIに接続しました');
       setTimeout(sendSessionUpdate, 250); // コネクションの開設を.25秒待つ
       console.log('OpenAI の準備が整いました。');
+
+      // セッション更新の少し後に初期メッセージを送信
+      setTimeout(() => {
+        // 初期メッセージを送信して会話を開始
+        sendInitialGreeting();
+      }, 1000); // セッション更新の後、1秒後に初期メッセージを送信
     });
+
+    // 初期挨拶メッセージを送信する関数（シンプルバージョン）
+    const sendInitialGreeting = () => {
+      console.log('初期挨拶を送信します');
+
+      // 直接レスポンスをリクエスト
+      // ユーザーからの入力がなくても、システムメッセージの指示に従って挨拶を返すはず
+      openAiWs.send(JSON.stringify({
+        type: 'response.create'
+      }));
+    };
 
     // Vonageから受信
     connection.on('message', (message) => {
@@ -201,9 +218,9 @@ fastify.register(async (fastify) => {
           }));
 
           // 2. 新しいレスポンスを強制的に作成する
-          openAiWs.send(JSON.stringify({
-            type: 'response.create'
-          }));
+          // openAiWs.send(JSON.stringify({
+          //   type: 'response.create'
+          // }));
 
           conversationItemId = null;
         }
@@ -212,6 +229,12 @@ fastify.register(async (fastify) => {
           // 必要に応じて新しい会話を開始
           isProcessingAudio = true;
         }
+
+        // アシスタントの音声応答をログに表示
+        if (response.type === 'response.audio_transcript.done' && response.transcript) {
+          console.log('🤖 アシスタント回答: ', response.transcript);
+        }
+
         if (response.type === 'response.audio.delta' && response.delta && isProcessingAudio) {
           const pcmBuffer = Buffer.from(response.delta, 'base64');
 
@@ -225,6 +248,7 @@ fastify.register(async (fastify) => {
             }
           }
         }
+
         if (response.type === 'response.function_call_arguments.done') {
           if (response.name === 'get_weather') {
             const { location, date } = JSON.parse(response.arguments);
@@ -236,13 +260,14 @@ fastify.register(async (fastify) => {
                 output: JSON.stringify(`${location}の${date}の天気は晴れです。`)
               }
             }
-            console.log(`🐞 function call completed.`);
+            console.log(`🐞 function call completed: ${location}の${date}の天気は晴れです。`);
             openAiWs.send(JSON.stringify(item));
             openAiWs.send(JSON.stringify({
               type: 'response.create',
             }));
           }
         }
+
         if (response.type === 'error') {
           console.log('OpenAIエラーが発生しました', response.error.message);
         }
