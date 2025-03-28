@@ -95,6 +95,8 @@ fastify.register(async (fastify) => {
 
     // let responseId = null;
     let conversationItemId = null;
+    let responseStartTimestamp = null;  // 応答開始時のタイムスタンプ
+    let latestAudioTimestamp = 0;       // 最新の音声タイムスタンプ
 
     const openAiWs = new WebSocket(`wss://api.openai.com/v1/realtime?model=${OPENAI_MODEL}`, {
       headers: {
@@ -178,6 +180,9 @@ fastify.register(async (fastify) => {
         } catch (error) {
           // messageがバイナリ
           if (wsOpenAiOpened) {
+            // タイムスタンプを更新（実際のVonage実装ではタイムスタンプ情報がない場合のフォールバック）
+            latestAudioTimestamp = Date.now();
+
             const audioAppend = {
               type: 'input_audio_buffer.append',
               audio: message.toString('base64')
@@ -199,54 +204,78 @@ fastify.register(async (fastify) => {
         if (response.type === 'session.updated') {
           console.log('Session updated successfully:', response);
         }
-        // if (response.type === 'response.created') {
-        //   responseId = response.response.id;
-        // }
+
+        // アシスタントの応答アイテムが作成されたとき
         if (response.type === 'conversation.item.created' && response.item.role === 'assistant') {
           conversationItemId = response.item.id;
+          console.log(`会話アイテムIDを記録: ${conversationItemId}`);
         }
+
+        // 最初の音声応答が来たときにタイムスタンプを記録
+        if (response.type === 'response.audio.delta' && response.delta) {
+          if (!responseStartTimestamp && conversationItemId) {
+            responseStartTimestamp = Date.now();
+            console.log(`応答開始時間を記録: ${responseStartTimestamp}ms`);
+          }
+
+          const pcmBuffer = Buffer.from(response.delta, 'base64');
+
+          // 960バイトに分割 (24kHz・16bit・20msフレーム = 960 bytes)
+          for (let i = 0; i < pcmBuffer.length; i += 960) {
+            const chunk = pcmBuffer.subarray(i, i + 960);
+            if (chunk.length === 960 && isProcessingAudio) {
+              // サンプリング周波数を24khzから16khzに変換
+              const pcmDecoded = pcm24To16(chunk);
+              connection.send(Buffer.from(pcmDecoded, 'base64'));
+            }
+          }
+        }
+
+        // ユーザーの発話が開始されたとき
         if (response.type === 'input_audio_buffer.speech_started' && conversationItemId) {
           console.log(`👋 conversation cancel: ${conversationItemId}`);
           isProcessingAudio = false; // 音声処理を一時停止
 
-          // 1. 中断リクエストを送信
+          // 実際の経過時間を計算（応答開始から現在までの時間）
+          let elapsedTime = 1500; // デフォルト値
+
+          if (responseStartTimestamp) {
+            elapsedTime = Date.now() - responseStartTimestamp;
+            console.log(`応答からの経過時間: ${elapsedTime}ms`);
+
+            // 音声が短すぎる場合は最小値を設定
+            if (elapsedTime < 500) {
+              elapsedTime = 500;
+            }
+            // 安全のために上限を設定（5秒）
+            if (elapsedTime > 5000) {
+              elapsedTime = 5000;
+            }
+          }
+
+          // 中断リクエストを送信
+          console.log(`会話を中断: item_id=${conversationItemId}, audio_end_ms=${elapsedTime}`);
           openAiWs.send(JSON.stringify({
             type: 'conversation.item.truncate',
             item_id: conversationItemId,
             content_index: 0,
-            audio_end_ms: 0
+            audio_end_ms: elapsedTime
           }));
 
-          // 2. 新しいレスポンスを強制的に作成する
-          // openAiWs.send(JSON.stringify({
-          //   type: 'response.create'
-          // }));
-
+          // リセット
           conversationItemId = null;
+          responseStartTimestamp = null;
         }
+
         if (response.type === 'conversation.item.truncated') {
           console.log('会話アイテムが正常に中断されました');
-          // 必要に応じて新しい会話を開始
+          // 処理を再開
           isProcessingAudio = true;
         }
 
         // アシスタントの音声応答をログに表示
         if (response.type === 'response.audio_transcript.done' && response.transcript) {
           console.log('🤖 アシスタント回答: ', response.transcript);
-        }
-
-        if (response.type === 'response.audio.delta' && response.delta && isProcessingAudio) {
-          const pcmBuffer = Buffer.from(response.delta, 'base64');
-
-          // 960バイトに分割 (24kHz・16bit・20msフレーム = 960 bytes)
-          for (let i = 0; i < pcmBuffer.length; i += 960) {
-            const chunk = pcmBuffer.subarray(i, i + 960);
-            if (chunk.length === 960) {
-              // サンプリング周波数を24khzから16khzに変換
-              const pcmDecoded = pcm24To16(chunk);
-              connection.send(Buffer.from(pcmDecoded, 'base64'));
-            }
-          }
         }
 
         if (response.type === 'response.function_call_arguments.done') {
