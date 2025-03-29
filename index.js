@@ -98,65 +98,6 @@ fastify.register(async (fastify) => {
     let responseStartTimestamp = null;  // 応答開始時のタイムスタンプ
     let latestAudioTimestamp = 0;       // 最新の音声タイムスタンプ
 
-    // 音声バッファリング用の変数
-    let audioBuffer = Buffer.alloc(0);  // 音声データのバッファ
-    let bufferTimer = null;            // バッファ送信用タイマー
-    const BUFFER_INTERVAL = 1000;      // バッファ送信間隔（1秒）
-    const FRAME_SIZE = 640;            // 20msフレームサイズ (16kHz・16bit・20ms = 640bytes)
-
-    // バッファされた音声データをフレームに分割して送信する関数（ウェイトなしで連続送信）
-    const sendBufferedAudio = () => {
-      if (audioBuffer.length > 0 && isProcessingAudio) {
-        const frameCount = Math.floor(audioBuffer.length / FRAME_SIZE);
-        console.log(`バッファされた音声データ（${audioBuffer.length}バイト、約${frameCount}フレーム）を送信します`);
-
-        // バッファを20msフレームごとに分割して送信（ウェイトなしで連続送信）
-        for (let i = 0; i < audioBuffer.length; i += FRAME_SIZE) {
-          const frameData = audioBuffer.subarray(i, i + FRAME_SIZE);
-
-          // フレームサイズが足りない場合はスキップ（最後の不完全なフレーム）
-          if (frameData.length < FRAME_SIZE) {
-            // 残りのデータは次回のバッファに追加するために残す
-            audioBuffer = frameData;
-            break;
-          }
-
-          // 各フレームをVonageに送信（ウェイトなし）
-          connection.send(frameData);
-        }
-
-        // 全フレームを送信済みの場合はバッファをクリア
-        if (audioBuffer.length < FRAME_SIZE) {
-          // 残りのデータは次回のバッファに保持
-        } else {
-          // すべて送信したのでバッファをクリア
-          audioBuffer = Buffer.alloc(0);
-        }
-      }
-    };
-
-    // バッファ送信タイマーを開始（1秒間隔）
-    const startBufferTimer = () => {
-      if (bufferTimer) {
-        clearInterval(bufferTimer);
-      }
-      bufferTimer = setInterval(sendBufferedAudio, BUFFER_INTERVAL);
-      console.log(`音声バッファリングタイマーを開始しました（${BUFFER_INTERVAL}ms間隔）`);
-    };
-
-    // バッファ送信タイマーを停止
-    const stopBufferTimer = () => {
-      if (bufferTimer) {
-        clearInterval(bufferTimer);
-        bufferTimer = null;
-        console.log('音声バッファリングタイマーを停止しました');
-      }
-
-      // バッファをクリア
-      audioBuffer = Buffer.alloc(0);
-      console.log('バッファを完全にクリアしました');
-    };
-
     const openAiWs = new WebSocket(`wss://api.openai.com/v1/realtime?model=${OPENAI_MODEL}`, {
       headers: {
         Authorization: `Bearer ${OPENAI_API_KEY}`,
@@ -268,8 +209,6 @@ fastify.register(async (fastify) => {
         if (response.type === 'conversation.item.created' && response.item.role === 'assistant') {
           conversationItemId = response.item.id;
           console.log(`会話アイテムIDを記録: ${conversationItemId}`);
-          // 新しい会話アイテムが作成されたらバッファタイマーを開始
-          startBufferTimer();
         }
 
         // 最初の音声応答が来たときにタイムスタンプを記録
@@ -281,34 +220,21 @@ fastify.register(async (fastify) => {
 
           const pcmBuffer = Buffer.from(response.delta, 'base64');
 
-          try {
-            // サンプリング周波数を24khzから16khzに変換
-            const pcmDecoded = pcm24To16(pcmBuffer);
-
-            // バッファに追加
-            const decodedBuffer = Buffer.from(pcmDecoded, 'base64');
-
-            if (isProcessingAudio) {
-              audioBuffer = Buffer.concat([audioBuffer, decodedBuffer]);
+          // 960バイトに分割 (24kHz・16bit・20msフレーム = 960 bytes)
+          for (let i = 0; i < pcmBuffer.length; i += 960) {
+            const chunk = pcmBuffer.subarray(i, i + 960);
+            if (chunk.length === 960 && isProcessingAudio) {
+              // サンプリング周波数を24khzから16khzに変換
+              const pcmDecoded = pcm24To16(chunk);
+              connection.send(Buffer.from(pcmDecoded, 'base64'));
             }
-          } catch (error) {
-            console.error('音声処理中にエラーが発生しました:', error);
           }
         }
 
         // ユーザーの発話が開始されたとき
         if (response.type === 'input_audio_buffer.speech_started' && conversationItemId) {
           console.log(`👋 conversation cancel: ${conversationItemId}`);
-
-          // 音声処理を一時停止（バッファ送信停止のために先に設定）
-          isProcessingAudio = false;
-
-          // バッファタイマーを停止して音声送信を即時停止
-          stopBufferTimer();
-
-          // バッファを明示的にクリア（重要：残りの音声が送信されないようにするため）
-          audioBuffer = Buffer.alloc(0);
-          console.log('中断処理: 音声バッファを完全にクリアしました');
+          isProcessingAudio = false; // 音声処理を一時停止
 
           // 実際の経過時間を計算（応答開始から現在までの時間）
           let elapsedTime = 1500; // デフォルト値
@@ -345,27 +271,6 @@ fastify.register(async (fastify) => {
           console.log('会話アイテムが正常に中断されました');
           // 処理を再開
           isProcessingAudio = true;
-          // バッファが残っていないことを確認
-          if (audioBuffer.length > 0) {
-            console.log('警告: 中断後にもバッファが残っています。クリアします。');
-            audioBuffer = Buffer.alloc(0);
-          }
-        }
-
-        if (response.type === 'response.done') {
-          console.log('レスポンス完了: 残りのバッファを送信します');
-
-          // 残りのバッファを送信（フレームサイズより小さいデータも送信）
-          if (audioBuffer.length > 0 && isProcessingAudio) {
-            // フレームサイズに満たない最後のデータも送信
-            connection.send(audioBuffer);
-          }
-
-          // バッファタイマーを停止
-          stopBufferTimer();
-
-          // バッファをクリア
-          audioBuffer = Buffer.alloc(0);
         }
 
         // アシスタントの音声応答をログに表示
@@ -402,8 +307,6 @@ fastify.register(async (fastify) => {
 
     connection.on('close', () => {
       console.log('クライアントが切断されました。');
-      // コネクションが閉じられたらタイマーをクリア
-      stopBufferTimer();
       if (openAiWs.readyState === WebSocket.OPEN) openAiWs.close();
     });
 
