@@ -44,7 +44,7 @@ const LOG_EVENT_TYPES = [
 let wsOpenAiOpened = false;
 let isProcessingAudio = true;
 
-const SYSTEM_MESSAGE = 'あなたは明るくフレンドリーなAIアシスタントです。ユーザーが興味を持っている話題について会話し、適切な情報を提供します。ジョークや楽しい話題を交えながら、常にポジティブでいてください。なお、会話はすべて日本語で行いますが、ユーザーが言語を指定した場合は、その言語で回答をしてください。';
+const SYSTEM_MESSAGE = 'あなたは明るくフレンドリーなAIアシスタントです。ユーザーが興味を持っている話題について会話し、適切な情報を提供します。ジョークや楽しい話題を交えながら、常にポジティブでいてください。なお、会話はすべて日本語で行いますが、ユーザーが言語を指定した場合は、その言語で回答をしてください。また、会話の最初は「こんにちは。今日はどのようなお話をしましょうか？」と挨拶をしてください。';
 // const SYSTEM_MESSAGE = 'You are a bright and friendly AI assistant. You converse about topics of interest to the user and provide relevant information. Stay positive at all times with jokes and fun topics.';
 
 fastify.get('/', async (request, reply) => {
@@ -239,8 +239,8 @@ fastify.register(async (fastify) => {
           // 実際の経過時間を計算（応答開始から現在までの時間）
           let elapsedTime = 1500; // デフォルト値
 
-          if (responseStartTimestamp) {
-            elapsedTime = Date.now() - responseStartTimestamp;
+          if (responseStartTimestamp && response.audio_start_ms) {
+            elapsedTime = response.audio_start_ms - responseStartTimestamp;
             console.log(`応答からの経過時間: ${elapsedTime}ms`);
 
             // 音声が短すぎる場合は最小値を設定
