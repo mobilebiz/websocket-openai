@@ -262,6 +262,11 @@ fastify.register(async (fastify) => {
             audio_end_ms: elapsedTime
           }));
 
+          // Vonageに中断リクエストを送信
+          connection.send(JSON.stringify({
+            action: 'clear',
+          }));
+
           // リセット
           conversationItemId = null;
           responseStartTimestamp = null;
