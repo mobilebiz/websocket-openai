@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import fastifyFormBody from '@fastify/formbody';
 import fastifyWs from '@fastify/websocket';
 import { pcm24To16 } from './lib/audio-converter.js';
+import { getWeatherInfo } from './get_weather.js';
 
 dotenv.config();
 
@@ -119,20 +120,16 @@ fastify.register(async (fastify) => {
             {
               type: "function",
               name: "get_weather",
-              description: "指定された場所と日付の天気を取得します",
+              description: "指定された場所の天気を取得します",
               parameters: {
                 type: "object",
                 properties: {
                   location: {
                     type: "string",
-                    description: "都道府県や市区町村の名前, e.g. 東京都大田区"
-                  },
-                  date: {
-                    type: "string",
-                    description: "The date in YYYY-MM-DD format, e.g. 2025/02/03"
+                    description: "都道府県名, e.g. 東京都,大阪,北海道"
                   }
                 },
-                required: ["location", "date"]
+                required: ["location"]
               }
             }
           ],
@@ -285,20 +282,45 @@ fastify.register(async (fastify) => {
 
         if (response.type === 'response.function_call_arguments.done') {
           if (response.name === 'get_weather') {
-            const { location, date } = JSON.parse(response.arguments);
-            const item = {
-              type: 'conversation.item.create',
-              item: {
-                type: 'function_call_output',
-                call_id: response.call_id,
-                output: JSON.stringify(`${location}の${date}の天気は晴れです。`)
-              }
+            try {
+              const { location } = JSON.parse(response.arguments);
+
+              // 天気情報を取得
+              const weatherInfo = await getWeatherInfo(location);
+
+              // 関数呼び出し結果を返す
+              const item = {
+                type: 'conversation.item.create',
+                item: {
+                  type: 'function_call_output',
+                  call_id: response.call_id,
+                  output: JSON.stringify(weatherInfo)
+                }
+              };
+
+              console.log(`🐞 function call completed: ${weatherInfo}`);
+              openAiWs.send(JSON.stringify(item));
+
+              // 応答を作成
+              openAiWs.send(JSON.stringify({
+                type: 'response.create',
+              }));
+            } catch (error) {
+              console.error('天気情報の処理中にエラーが発生しました:', error);
+              // エラー時には簡単なメッセージを返す
+              const errorItem = {
+                type: 'conversation.item.create',
+                item: {
+                  type: 'function_call_output',
+                  call_id: response.call_id,
+                  output: JSON.stringify('天気情報の取得中にエラーが発生しました。')
+                }
+              };
+              openAiWs.send(JSON.stringify(errorItem));
+              openAiWs.send(JSON.stringify({
+                type: 'response.create',
+              }));
             }
-            console.log(`🐞 function call completed: ${location}の${date}の天気は晴れです。`);
-            openAiWs.send(JSON.stringify(item));
-            openAiWs.send(JSON.stringify({
-              type: 'response.create',
-            }));
           }
         }
 
