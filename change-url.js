@@ -51,7 +51,7 @@ if (!apiKey || !apiSecret) {
 }
 
 // Webhook URLの設定
-const answerUrl = `https://${serverUrl}/incoming-call`;
+const answerUrl = `https://${serverUrl}/answer`;
 const eventUrl = `https://${serverUrl}/event`;
 
 console.log(`Vonageアプリケーション(ID: ${applicationId})のWebhook URLを更新します...`);

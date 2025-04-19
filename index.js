@@ -66,8 +66,8 @@ fastify.all('/event', async (request, reply) => {
 });
 
 // 着信コールの処理ルート
-fastify.all('/incoming-call', async (request, reply) => {
-  console.log(`🐞 /incoming-call called. ${SERVER_URL}`);
+fastify.all('/answer', async (request, reply) => {
+  console.log(`🐞 /answer called. ${SERVER_URL}`);
   const nccoResponse = [
     {
       action: 'talk',
