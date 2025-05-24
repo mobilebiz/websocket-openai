@@ -28,6 +28,7 @@ const LOG_EVENT_TYPES = [
   // 'rate_limits.updated',
   'response.created',
   'response.done',
+  'response.audio_transcript.done',
   // 'response.function_call_arguments.delta',
   'response.function_call_arguments.done',
   'input_audio_buffer.committed',
@@ -39,6 +40,7 @@ const LOG_EVENT_TYPES = [
   // 'conversation.created',
   'conversation.item.created',
   'conversation.item.truncated',
+  'conversation.item.input_audio_transcription.completed',
   'error'
 ];
 
@@ -110,6 +112,9 @@ fastify.register(async (fastify) => {
         type: 'session.update',
         session: {
           turn_detection: { type: 'server_vad' },
+          input_audio_transcription: {
+            model: 'whisper-1'
+          },
           input_audio_format: 'pcm16',
           output_audio_format: 'pcm16',
           voice: 'alloy',
@@ -273,6 +278,11 @@ fastify.register(async (fastify) => {
           console.log('会話アイテムが正常に中断されました');
           // 処理を再開
           isProcessingAudio = true;
+        }
+
+        // ユーザーの音声の文字起こしをログに表示
+        if (response.type === 'conversation.item.input_audio_transcription.completed' && response.transcript) {
+          console.log('🤖 ユーザーの音声の文字起こし: ', response.transcript);
         }
 
         // アシスタントの音声応答をログに表示
