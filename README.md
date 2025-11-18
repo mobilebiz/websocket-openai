@@ -57,6 +57,8 @@ SERVER_URL|ngrokで払い出されたURL（https://は除く）
 OPENAI_API_KEY|OpeAIのシークレットキー（sk-から始まる文字列）
 OPENAI_API_VERSION|2025-04-01-preview（OpenAI Realtime API の最新バージョン）
 OPENAI_MODEL|gpt-realtime（Realtime 対応のモデル）
+VONAGE_PRIVATE_KEY_PATH|Vonage Voice API v2 用の秘密鍵ファイルパス（例: `./private.key`）
+VONAGE_OUTBOUND_FROM|Vonageで取得した発信元電話番号（E.164形式）
 
 上記の設定では、OpenAI Realtime API 側に `OPENAI_API_VERSION=2025-04-01-preview` を送り、`gpt-realtime` モデルと組み合わせることで最新仕様に対応しています。これにより音声入力→応答のリアルタイムループが安定して機能します。
 
@@ -68,6 +70,21 @@ ngrok を起動するたびに払い出される URL が異なるため、ngrok 
 
 Vonage のダッシュボードから、作成したアプリケーションの設定画面を開き、**回答 URL** に ``ngrok の URL/incoming-call`` を設定、メソッドは`POST`。
 同じく、**イベント URL** に ``ngrok の URL/event`` を設定、メソッドは`POST`。
+
+### `/connect` でのアウトバウンド発信
+
+Vonage Voice API v2 を使って任意の番号へ発信するには、以下のように `POST /connect` を呼び出します。呼び出し時に `VONAGE_APPLICATION_ID` と `VONAGE_PRIVATE_KEY_PATH` から生成した JWT を内部で利用し、相手が応答すると `/answer` の NCCO（ガイダンス → WebSocket 接続）を通じて OpenAI Realtime に接続します。
+
+```sh
+curl -X POST https://<サーバー>/connect \
+  -H "Content-Type: application/json" \
+  -d '{
+    "to": "+818012345678",
+    "from": "+815031023332"
+  }'
+```
+
+`from` を省略すると `VONAGE_OUTBOUND_FROM` の値が自動で利用されます。秘密鍵ファイル（例: `private.key`）は `.gitignore` されているので、ローカル/本番それぞれの環境に配置してください。
 
 ### テスト
 

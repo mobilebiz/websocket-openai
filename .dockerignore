@@ -5,3 +5,4 @@
 Dockerfile
 fly.toml
 vcr.yml
+private.key

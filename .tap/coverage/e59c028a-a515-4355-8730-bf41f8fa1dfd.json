@@ -9,7 +9,7 @@
           "ranges": [
             {
               "startOffset": 0,
-              "endOffset": 943,
+              "endOffset": 1371,
               "count": 1
             }
           ],
@@ -19,23 +19,33 @@
           "functionName": "pcm24To16",
           "ranges": [
             {
-              "startOffset": 210,
-              "endOffset": 899,
+              "startOffset": 231,
+              "endOffset": 1371,
               "count": 2
             },
             {
-              "startOffset": 337,
-              "endOffset": 651,
+              "startOffset": 358,
+              "endOffset": 765,
               "count": 1
             },
             {
-              "startOffset": 651,
-              "endOffset": 873,
-              "count": 160
+              "startOffset": 765,
+              "endOffset": 1345,
+              "count": 320
             },
             {
-              "startOffset": 873,
-              "endOffset": 898,
+              "startOffset": 1049,
+              "endOffset": 1052,
+              "count": 0
+            },
+            {
+              "startOffset": 1148,
+              "endOffset": 1157,
+              "count": 0
+            },
+            {
+              "startOffset": 1345,
+              "endOffset": 1370,
               "count": 1
             }
           ],
@@ -44,6 +54,6 @@
       ]
     }
   ],
-  "timestamp": 839484.450709,
+  "timestamp": 262402.222209,
   "source-map-cache": {}
 }

@@ -4,6 +4,10 @@ import dotenv from 'dotenv';
 import fastifyFormBody from '@fastify/formbody';
 import fastifyWs from '@fastify/websocket';
 import fs from 'fs';
+import path from 'path';
+import fetch from 'node-fetch';
+import jwt from 'jsonwebtoken';
+import { randomUUID } from 'crypto';
 import { pcm24To16 } from './lib/audio-converter.js';
 import { getWeatherInfo } from './get_weather.js';
 
@@ -12,7 +16,14 @@ import { getWeatherInfo } from './get_weather.js';
 dotenv.config();
 
 // 環境変数を読み込み、必要な値を取り出す
-const { OPENAI_MODEL, SERVER_URL } = process.env;
+const {
+  OPENAI_MODEL,
+  SERVER_URL,
+  VONAGE_APPLICATION_ID,
+  VONAGE_PRIVATE_KEY_PATH,
+  VONAGE_OUTBOUND_FROM,
+  VONAGE_PRIVATE_KEY
+} = process.env;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY_SECRET || process.env.OPENAI_API_KEY;
 
 // 必須情報がそろっていなければ起動を止める
@@ -68,6 +79,50 @@ const loadSystemMessage = () => {
   return DEFAULT_SYSTEM_MESSAGE;
 };
 const SYSTEM_MESSAGE = loadSystemMessage();
+
+const buildPublicUrl = (pathname = '') => {
+  if (!SERVER_URL) return '';
+  const hasProtocol = SERVER_URL.startsWith('http://') || SERVER_URL.startsWith('https://');
+  const baseUrl = hasProtocol ? SERVER_URL : `https://${SERVER_URL}`;
+  return `${baseUrl}${pathname}`;
+};
+
+const resolveVonagePrivateKey = () => {
+  if (VONAGE_PRIVATE_KEY && VONAGE_PRIVATE_KEY.trim()) {
+    return VONAGE_PRIVATE_KEY.trim();
+  }
+
+  if (!VONAGE_PRIVATE_KEY_PATH) {
+    return null;
+  }
+
+  const resolvedPath = path.isAbsolute(VONAGE_PRIVATE_KEY_PATH)
+    ? VONAGE_PRIVATE_KEY_PATH
+    : path.resolve(process.cwd(), VONAGE_PRIVATE_KEY_PATH);
+  try {
+    return fs.readFileSync(resolvedPath, 'utf8').trim();
+  } catch (error) {
+    console.warn(`Vonageのプライベートキーを ${resolvedPath} から読み込めませんでした: ${error.message}`);
+    return null;
+  }
+};
+
+const vonagePrivateKey = resolveVonagePrivateKey();
+
+const createVonageJwt = () => {
+  if (!VONAGE_APPLICATION_ID || !vonagePrivateKey) {
+    throw new Error('VonageのアプリケーションIDまたはプライベートキーが設定されていません。');
+  }
+  const now = Math.floor(Date.now() / 1000);
+  const payload = {
+    application_id: VONAGE_APPLICATION_ID,
+    iat: now,
+    exp: now + 60 * 5,
+    jti: randomUUID()
+  };
+
+  return jwt.sign(payload, vonagePrivateKey, { algorithm: 'RS256' });
+};
 // const SYSTEM_MESSAGE = 'あなたは明るくフレンドリーなAIアシスタントです。ユーザーが興味を持っている話題について会話し、適切な情報を提供します。ジョークや楽しい話題を交えながら、常にポジティブでいてください。なお、会話はすべて日本語で行いますが、ユーザーが言語を指定した場合は、その言語で回答をしてください。また、会話の最初は「こんにちは。今日はどのようなお話をしましょうか？」と挨拶をしてください。';
 // const SYSTEM_MESSAGE = 'You are a bright and friendly AI assistant. You converse about topics of interest to the user and provide relevant information. Stay positive at all times with jokes and fun topics.';
 
@@ -90,6 +145,63 @@ fastify.get('/_/metrics', async (request, reply) => {
 fastify.all('/event', async (request, reply) => {
   console.log(JSON.stringify(request.body, null, 2));
   reply.send('OK');
+});
+
+// 指定した番号に Vonage Voice API v2 でアウトバウンド発信する
+fastify.post('/connect', async (request, reply) => {
+  const { to, from } = request.body ?? {};
+  if (!to) {
+    return reply.status(400).send({ error: '`to` は必須です。E.164形式で指定してください。' });
+  }
+
+  const outboundFrom = from || VONAGE_OUTBOUND_FROM;
+  if (!outboundFrom) {
+    return reply.status(400).send({ error: '`from` を指定するか VONAGE_OUTBOUND_FROM を環境変数で設定してください。' });
+  }
+
+  let jwtToken;
+  try {
+    jwtToken = createVonageJwt();
+    console.log('Vonage JWT を生成しました', jwtToken);
+  } catch (error) {
+    console.error('Vonage JWT の生成に失敗しました', error);
+    return reply.status(500).send({ error: 'Vonage JWT の生成に失敗しました。' });
+  }
+
+  const payload = {
+    to: [{ type: 'phone', number: to }],
+    from: { type: 'phone', number: outboundFrom },
+    answer_url: [buildPublicUrl('/answer')],
+    answer_method: 'POST',
+    event_url: [buildPublicUrl('/event')],
+    event_method: 'POST'
+  };
+
+  try {
+    const response = await fetch('https://api.nexmo.com/v2/calls', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${jwtToken}`
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const responseBody = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      console.error('Vonage Voice API の呼び出しに失敗しました', responseBody);
+      return reply.status(response.status).send({
+        error: 'Vonage Voice API の呼び出しに失敗しました。',
+        details: responseBody
+      });
+    }
+
+    return reply.status(201).send(responseBody);
+  } catch (error) {
+    console.error('Vonage Voice API との通信に失敗しました', error);
+    return reply.status(502).send({ error: 'Vonage Voice API との通信に失敗しました。' });
+  }
 });
 
 // 着信コールへの応答を生成し、Vonage の WebSocket ストリームに接続させる

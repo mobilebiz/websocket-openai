@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import * as fs from 'fs';
 import dotenv from 'dotenv';
+import { spawnSync } from 'child_process';
 
 // ESMで__dirnameを取得するための対応
 const __filename = fileURLToPath(import.meta.url);
@@ -48,6 +49,45 @@ if (!applicationId) {
 if (!apiKey || !apiSecret) {
   console.error('エラー: Vonage API認証情報（VONAGE_API_KEY, VONAGE_API_SECRET）が設定されていません。');
   process.exit(1);
+}
+
+const privateKeyPath = process.env.VONAGE_PRIVATE_KEY_PATH;
+
+function updateFlySecretsIfNeeded() {
+  if (env !== 'prod') {
+    return;
+  }
+
+  if (!privateKeyPath) {
+    console.warn('警告: VONAGE_PRIVATE_KEY_PATH が設定されていないため Fly secrets は更新されません。');
+    return;
+  }
+
+  const resolvedKeyPath = path.resolve(process.cwd(), privateKeyPath);
+  if (!fs.existsSync(resolvedKeyPath)) {
+    console.warn(`警告: 指定されたプライベートキーが見つかりません (${resolvedKeyPath})。Fly secrets は更新されません。`);
+    return;
+  }
+
+  try {
+    const privateKey = fs.readFileSync(resolvedKeyPath, 'utf8').trim();
+    if (!privateKey) {
+      console.warn('警告: プライベートキーファイルが空です。Fly secrets は更新されません。');
+      return;
+    }
+
+    console.log('Fly secrets に VONAGE_PRIVATE_KEY を設定します...');
+    const result = spawnSync('fly', ['secrets', 'set', `VONAGE_PRIVATE_KEY=${privateKey}`], {
+      stdio: 'inherit'
+    });
+
+    if (result.status !== 0) {
+      throw new Error('fly secrets set コマンドの実行に失敗しました。');
+    }
+  } catch (error) {
+    console.error('Fly secrets の更新に失敗しました:', error);
+    process.exit(1);
+  }
 }
 
 // Webhook URLの設定
@@ -116,4 +156,5 @@ async function updateWebhookUrls() {
 }
 
 // 更新実行
+updateFlySecretsIfNeeded();
 updateWebhookUrls(); 

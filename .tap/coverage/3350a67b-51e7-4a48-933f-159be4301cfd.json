@@ -1,7 +1,7 @@
 {
   "result": [
     {
-      "scriptId": "346",
+      "scriptId": "316",
       "url": "file:///Users/katsumi/Documents/workspace/vonage/websocket-openai/lib/audio-converter.js",
       "functions": [
         {
@@ -9,7 +9,7 @@
           "ranges": [
             {
               "startOffset": 0,
-              "endOffset": 943,
+              "endOffset": 1371,
               "count": 1
             }
           ],
@@ -19,8 +19,8 @@
           "functionName": "pcm24To16",
           "ranges": [
             {
-              "startOffset": 210,
-              "endOffset": 899,
+              "startOffset": 231,
+              "endOffset": 1371,
               "count": 0
             }
           ],
@@ -29,6 +29,6 @@
       ]
     }
   ],
-  "timestamp": 839484.599001,
+  "timestamp": 262402.401584,
   "source-map-cache": {}
 }
