@@ -10,6 +10,7 @@ import jwt from 'jsonwebtoken';
 import { randomUUID } from 'crypto';
 import { pcm24To16 } from './lib/audio-converter.js';
 import { getWeatherInfo } from './get_weather.js';
+import { putName } from './put_name.js';
 
 // Vonage Voice による音声を受け取り、OpenAI Realtime API へ転送する役割を担うサーバー
 
@@ -277,6 +278,21 @@ fastify.register(async (fastify) => {
                 },
                 required: ["location"]
               }
+            },
+            {
+              type: "function",
+              name: "put_name",
+              description: "取得したユーザー名を記録します",
+              parameters: {
+                type: "object",
+                properties: {
+                  name: {
+                    type: "string",
+                    description: "ユーザーの名前"
+                  }
+                },
+                required: ["name"]
+              }
             }
           ],
           tool_choice: 'auto',
@@ -440,14 +456,13 @@ fastify.register(async (fastify) => {
 
         // 関数呼び出しの結果を受け取り、実際の関数実行と応答生成
         if (response.type === 'response.function_call_arguments.done') {
-          if (response.name === 'get_weather') {
-            try {
-              const { location } = JSON.parse(response.arguments);
+          try {
+            const args = JSON.parse(response.arguments || '{}');
 
-              // 天気情報を取得
+            if (response.name === 'get_weather') {
+              const { location } = args;
               const weatherInfo = await getWeatherInfo(location);
 
-              // 関数呼び出し結果を返す
               const item = {
                 type: 'conversation.item.create',
                 item: {
@@ -459,27 +474,35 @@ fastify.register(async (fastify) => {
 
               console.log(`🐞 function call completed: ${weatherInfo}`);
               openAiWs.send(JSON.stringify(item));
+              openAiWs.send(JSON.stringify({ type: 'response.create' }));
+            } else if (response.name === 'put_name') {
+              const { name } = args;
+              await putName(name);
 
-              // 応答を作成
-              openAiWs.send(JSON.stringify({
-                type: 'response.create',
-              }));
-            } catch (error) {
-              console.error('天気情報の処理中にエラーが発生しました:', error);
-              // エラー時には簡単なメッセージを返す
-              const errorItem = {
+              const item = {
                 type: 'conversation.item.create',
                 item: {
                   type: 'function_call_output',
                   call_id: response.call_id,
-                  output: JSON.stringify('天気情報の取得中にエラーが発生しました。')
+                  output: JSON.stringify({ status: 'ok' })
                 }
               };
-              openAiWs.send(JSON.stringify(errorItem));
-              openAiWs.send(JSON.stringify({
-                type: 'response.create',
-              }));
+
+              openAiWs.send(JSON.stringify(item));
+              openAiWs.send(JSON.stringify({ type: 'response.create' }));
             }
+          } catch (error) {
+            console.error('関数呼び出しの処理中にエラーが発生しました:', error);
+            const errorItem = {
+              type: 'conversation.item.create',
+              item: {
+                type: 'function_call_output',
+                call_id: response.call_id,
+                output: JSON.stringify('ツール呼び出しの処理中にエラーが発生しました。')
+              }
+            };
+            openAiWs.send(JSON.stringify(errorItem));
+            openAiWs.send(JSON.stringify({ type: 'response.create' }));
           }
         }
 

@@ -12,6 +12,7 @@ dotenv.config();
 const OPEN_WEATHER_API_KEY = process.env.OPEN_WEATHER_API_KEY;
 
 export async function getWeatherInfo(location) {
+  console.log('🐞 getWeatherInfo', location);
   try {
     if (!OPEN_WEATHER_API_KEY) {
       throw new Error('OpenWeatherMap APIキーが設定されていません。環境変数OPEN_WEATHER_API_KEYを確認してください。');

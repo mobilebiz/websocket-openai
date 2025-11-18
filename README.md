@@ -29,6 +29,7 @@ sequenceDiagram
 ### Vonage でアプリケーションを作成
   
 1. [Vonage Voice API ガイド](https://zenn.dev/kwcplus/articles/vonage-voice-guide)
+1. 公開鍵と秘密鍵を生成し、秘密鍵をprivate.keyという名前に変更してディレクトリの直下に配置。
 1. 作成したアプリケーションに購入した電話番号をリンク
 
 ### OpenAI の API キー取得
