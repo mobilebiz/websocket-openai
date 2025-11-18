@@ -55,7 +55,12 @@ cp .env.example .env
 :--|:--
 SERVER_URL|ngrokで払い出されたURL（https://は除く）
 OPENAI_API_KEY|OpeAIのシークレットキー（sk-から始まる文字列）
-OPENAI_MODEL|gpt-4o-mini-realtime-preview-2024-12-17
+OPENAI_API_VERSION|2025-04-01-preview（OpenAI Realtime API の最新バージョン）
+OPENAI_MODEL|gpt-realtime（Realtime 対応のモデル）
+
+上記の設定では、OpenAI Realtime API 側に `OPENAI_API_VERSION=2025-04-01-preview` を送り、`gpt-realtime` モデルと組み合わせることで最新仕様に対応しています。これにより音声入力→応答のリアルタイムループが安定して機能します。
+
+追加の調整をしたいときは、ルートにある `system-message.txt` に書かれた文言が最優先で読み込まれます。ファイルが存在しないか空の場合はデフォルトの挨拶文（README の冒頭にあるチャッピーの定義）を使用します。
 
 `.env`を読み込むために npm run start を Ctrl-c で終了させ、再度 npm run start で起動。
 

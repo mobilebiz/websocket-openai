@@ -3,19 +3,25 @@ import WebSocket from 'ws';
 import dotenv from 'dotenv';
 import fastifyFormBody from '@fastify/formbody';
 import fastifyWs from '@fastify/websocket';
+import fs from 'fs';
 import { pcm24To16 } from './lib/audio-converter.js';
 import { getWeatherInfo } from './get_weather.js';
 
+// Vonage Voice による音声を受け取り、OpenAI Realtime API へ転送する役割を担うサーバー
+
 dotenv.config();
 
+// 環境変数を読み込み、必要な値を取り出す
 const { OPENAI_MODEL, SERVER_URL } = process.env;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY_SECRET || process.env.OPENAI_API_KEY;
 
+// 必須情報がそろっていなければ起動を止める
 if (!OPENAI_MODEL || !SERVER_URL || !OPENAI_API_KEY) {
   console.error('環境変数が不足しています。 .envファイル、もしくはvcr.ymlで設定してください。');
   process.exit(1);
 }
 
+// Fastify サーバーを初期化し、必要なプラグインを登録
 const fastify = Fastify();
 fastify.register(fastifyFormBody);
 fastify.register(fastifyWs);
@@ -23,6 +29,7 @@ fastify.register(fastifyWs);
 console.debug(`VCR_PORT: ${process.env.VCR_PORT}`);
 const PORT = process.env.VCR_PORT || process.env.PORT || 3000;
 
+// OpenAI Realtime からのイベントのうちログを残したい種類を列挙
 const LOG_EVENT_TYPES = [
   'response.content.done',
   // 'rate_limits.updated',
@@ -47,29 +54,48 @@ const LOG_EVENT_TYPES = [
 let wsOpenAiOpened = false;
 let isProcessingAudio = true;
 
-const SYSTEM_MESSAGE = 'あなたは明るくフレンドリーなAIアシスタントです。ユーザーが興味を持っている話題について会話し、適切な情報を提供します。ジョークや楽しい話題を交えながら、常にポジティブでいてください。なお、会話はすべて日本語で行いますが、ユーザーが言語を指定した場合は、その言語で回答をしてください。また、会話の最初は「こんにちは。今日はどのようなお話をしましょうか？」と挨拶をしてください。';
+// system-message.txt を優先し、ファイルがない場合はデフォルト文字列を使用
+const SYSTEM_MESSAGE_FILE = new URL('./system-message.txt', import.meta.url);
+const DEFAULT_SYSTEM_MESSAGE = 'あなたの名前はチャッピーです。明るくフレンドリーなAIアシスタントです。ユーザーが興味を持っている話題について会話し、適切な情報を提供します。ジョークや楽しい話題を交えながら、常にポジティブでいてください。なお、会話はすべて日本語で行いますが、ユーザーが言語を指定した場合は、その言語で回答をしてください。また、会話の最初は「こんにちは。チャッピーです。今日はどのようなお話をしましょうか？」と挨拶をしてください。';
+const loadSystemMessage = () => {
+  try {
+    const content = fs.readFileSync(SYSTEM_MESSAGE_FILE, 'utf8').trim();
+    if (content) return content;
+    console.warn('system-message.txt が空です。デフォルトメッセージを使用します。');
+  } catch (error) {
+    console.warn('system-message.txt を読み込めませんでした。デフォルトメッセージを使用します。', error?.message);
+  }
+  return DEFAULT_SYSTEM_MESSAGE;
+};
+const SYSTEM_MESSAGE = loadSystemMessage();
+// const SYSTEM_MESSAGE = 'あなたは明るくフレンドリーなAIアシスタントです。ユーザーが興味を持っている話題について会話し、適切な情報を提供します。ジョークや楽しい話題を交えながら、常にポジティブでいてください。なお、会話はすべて日本語で行いますが、ユーザーが言語を指定した場合は、その言語で回答をしてください。また、会話の最初は「こんにちは。今日はどのようなお話をしましょうか？」と挨拶をしてください。';
 // const SYSTEM_MESSAGE = 'You are a bright and friendly AI assistant. You converse about topics of interest to the user and provide relevant information. Stay positive at all times with jokes and fun topics.';
 
+// ルート: サービスが稼働していることを確認するための最小限のヘルスチェック
 fastify.get('/', async (request, reply) => {
   reply.send({ message: 'Vonage Voiceサーバーが稼働中です。' });
 });
 
+// 固有のヘルスチェック (外部監視サービスなどで利用)
 fastify.get('/_/health', async (request, reply) => {
   reply.send('OK');
 });
 
+// Prometheus やメトリクス収集用に用意されたエンドポイント
 fastify.get('/_/metrics', async (request, reply) => {
   reply.send('OK');
 });
 
+// Vonage のイベント Webhook を受け取ってログ出力のみを行う
 fastify.all('/event', async (request, reply) => {
   console.log(JSON.stringify(request.body, null, 2));
   reply.send('OK');
 });
 
-// 着信コールの処理ルート
+// 着信コールへの応答を生成し、Vonage の WebSocket ストリームに接続させる
 fastify.all('/answer', async (request, reply) => {
   console.log(`🐞 /answer called. ${SERVER_URL}`);
+  // Vonage に返す NCCO: 簡単な挨拶のあと WebSocket へ接続
   const nccoResponse = [
     {
       action: 'talk',
@@ -91,22 +117,25 @@ fastify.all('/answer', async (request, reply) => {
   reply.type('application/json').send(nccoResponse);
 });
 
-// WebSocketルート for media-stream
+// WebSocket ルート: Vonage のメディアストリームと OpenAI Realtime をつなぐ
 fastify.register(async (fastify) => {
   fastify.get('/media-stream', { websocket: true }, (connection, req) => {
     console.log('クライアントが接続されました');
 
+    // 会話の状態やタイミングを記録する変数
     // let responseId = null;
     let conversationItemId = null;
     let responseStartTimestamp = null;  // 応答開始時のタイムスタンプ
     let latestAudioTimestamp = 0;       // 最新の音声タイムスタンプ
 
+    // OpenAI Realtime API の WebSocket に接続
     const openAiWs = new WebSocket(`wss://api.openai.com/v1/realtime?model=${OPENAI_MODEL}`, {
       headers: {
         Authorization: `Bearer ${OPENAI_API_KEY}`,
         "OpenAI-Beta": "realtime=v1"
       }
     });
+    // OpenAI セッションの初期設定情報を送信するヘルパー
     const sendSessionUpdate = () => {
       const sessionUpdate = {
         type: 'session.update',
@@ -146,6 +175,7 @@ fastify.register(async (fastify) => {
       wsOpenAiOpened = true;
     };
 
+    // OpenAI への接続が確立したときの初期処理
     openAiWs.on('open', () => {
       console.log('OpenAI Realtime APIに接続しました');
       setTimeout(sendSessionUpdate, 250); // コネクションの開設を.25秒待つ
@@ -160,6 +190,7 @@ fastify.register(async (fastify) => {
 
     // 初期挨拶メッセージを送信する関数（シンプルバージョン）
     const sendInitialGreeting = () => {
+      // 会話冒頭で OpenAI に初期挨拶をリクエスト
       console.log('初期挨拶を送信します');
 
       // 直接レスポンスをリクエスト
@@ -170,19 +201,20 @@ fastify.register(async (fastify) => {
     };
 
     // Vonageから受信
+    // Vonage から届くイベントや音声バイナリを処理
     connection.on('message', (message) => {
 
       if (Buffer.isBuffer(message)) {
         try {
-          // messageがJSON
+          // JSON データは接続イベントなどのメタ情報
           const data = JSON.parse(message.toString());
           if (data.event === 'websocket:connected') {
             console.log('ストリームが開始されました:', data);
           }
         } catch (error) {
-          // messageがバイナリ
+          // バイナリは音声データとして OpenAI に中継
           if (wsOpenAiOpened) {
-            // タイムスタンプを更新（実際のVonage実装ではタイムスタンプ情報がない場合のフォールバック）
+            // タイムスタンプを更新（Vonage 実装では送られてこないためフォールバック）
             latestAudioTimestamp = Date.now();
 
             const audioAppend = {
@@ -197,23 +229,26 @@ fastify.register(async (fastify) => {
     });
 
     // OpenAIから受信
+    // OpenAI から届く各イベントを処理
     openAiWs.on('message', async (data) => {
       try {
         const response = JSON.parse(data);
+        // 必要なイベントタイプだけログに出力
         if (LOG_EVENT_TYPES.includes(response.type)) {
           console.log(`Received event: ${response.type}`, response);
         }
+        // セッション更新完了の通知
         if (response.type === 'session.updated') {
           console.log('Session updated successfully:', response);
         }
 
-        // アシスタントの応答アイテムが作成されたとき
+        // OpenAI からのアシスタント応答アイテムを記録
         if (response.type === 'conversation.item.created' && response.item.role === 'assistant') {
           conversationItemId = response.item.id;
           console.log(`会話アイテムIDを記録: ${conversationItemId}`);
         }
 
-        // 最初の音声応答が来たときにタイムスタンプを記録
+        // 音声応答が届いたらタイムスタンプに基づく処理と再生
         if (response.type === 'response.audio.delta' && response.delta) {
           if (!responseStartTimestamp && conversationItemId) {
             responseStartTimestamp = Date.now();
@@ -233,7 +268,7 @@ fastify.register(async (fastify) => {
           }
         }
 
-        // ユーザーの発話が開始されたとき
+        // ユーザーが話し始めたら現在の応答を中断
         if (response.type === 'input_audio_buffer.speech_started' && conversationItemId) {
           console.log(`👋 conversation cancel: ${conversationItemId}`);
           isProcessingAudio = false; // 音声処理を一時停止
@@ -274,22 +309,24 @@ fastify.register(async (fastify) => {
           responseStartTimestamp = null;
         }
 
+        // 中断処理が完了したら音声処理を再開
         if (response.type === 'conversation.item.truncated') {
           console.log('会話アイテムが正常に中断されました');
           // 処理を再開
           isProcessingAudio = true;
         }
 
-        // ユーザーの音声の文字起こしをログに表示
+        // ユーザーの文字起こし結果をログ
         if (response.type === 'conversation.item.input_audio_transcription.completed' && response.transcript) {
           console.log('🤖 ユーザーの音声の文字起こし: ', response.transcript);
         }
 
-        // アシスタントの音声応答をログに表示
+        // アシスタント側のテキスト化済み応答をログ
         if (response.type === 'response.audio_transcript.done' && response.transcript) {
           console.log('🤖 アシスタント回答: ', response.transcript);
         }
 
+        // 関数呼び出しの結果を受け取り、実際の関数実行と応答生成
         if (response.type === 'response.function_call_arguments.done') {
           if (response.name === 'get_weather') {
             try {
@@ -334,31 +371,37 @@ fastify.register(async (fastify) => {
           }
         }
 
+        // OpenAI 側でエラーが通知された場合
         if (response.type === 'error') {
           console.log('OpenAIエラーが発生しました', response.error.message);
         }
       } catch (error) {
+        // パースなどで失敗したメッセージもログ化
         console.error('👺 OpenAIメッセージの処理中にエラーが発生しました:', error, 'Raw message:', data);
       }
     });
 
+    // クライアント接続が切れたら OpenAI も切断
     connection.on('close', () => {
       console.log('クライアントが切断されました。');
       if (openAiWs.readyState === WebSocket.OPEN) openAiWs.close();
     });
 
+    // OpenAI 側から切断された場合のクリーンアップ
     openAiWs.on('close', () => {
       console.log('OpenAIから切断されました');
       wsOpenAiOpened = false;
       connection.close();
     });
 
+    // エラーはログにのみ記録
     openAiWs.on('error', (error) => {
       console.error('👺 OpenAI WebSocketエラー:', error);
     });
   });
 });
 
+// Fastify サーバー起動
 fastify.listen({ port: PORT, host: '0.0.0.0' }, (err) => {
   if (err) {
     console.error(err);

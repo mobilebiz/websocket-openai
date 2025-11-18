@@ -1,3 +1,7 @@
-node_modules/
+/.git
+/node_modules
+.dockerignore
 .env
+Dockerfile
+fly.toml
 vcr.yml

@@ -1,7 +1,7 @@
 # syntax = docker/dockerfile:1
 
 # Adjust NODE_VERSION as desired
-ARG NODE_VERSION=23.6.0
+ARG NODE_VERSION=20.18.1
 FROM node:${NODE_VERSION}-slim AS base
 
 LABEL fly_launch_runtime="Node.js"
@@ -23,7 +23,7 @@ RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y build-essential node-gyp pkg-config python-is-python3
 
 # Install node modules
-COPY package.json yarn.lock ./
+COPY package-lock.json package.json yarn.lock ./
 RUN yarn install --frozen-lockfile
 
 # Copy application code
