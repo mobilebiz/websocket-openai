@@ -150,6 +150,18 @@ fastify.all('/event', async (request, reply) => {
 
 // 指定した番号に Vonage Voice API v2 でアウトバウンド発信する
 fastify.post('/connect', async (request, reply) => {
+  const apiKeyHeader = request.headers['x-api-key'];
+  if (!apiKeyHeader) {
+    return reply.status(401).send({ error: 'APIキーが指定されていません。' });
+  }
+  if (!VONAGE_APPLICATION_ID) {
+    console.error('APIキー検証に必要な VONAGE_APPLICATION_ID が未設定です。');
+    return reply.status(500).send({ error: 'サーバー側のAPIキー設定に問題があります。' });
+  }
+  if (apiKeyHeader !== VONAGE_APPLICATION_ID) {
+    return reply.status(403).send({ error: 'APIキーが一致しません。' });
+  }
+
   const { to, from } = request.body ?? {};
   if (!to) {
     return reply.status(400).send({ error: '`to` は必須です。E.164形式で指定してください。' });
@@ -537,10 +549,14 @@ fastify.register(async (fastify) => {
 });
 
 // Fastify サーバー起動
-fastify.listen({ port: PORT, host: '0.0.0.0' }, (err) => {
-  if (err) {
-    console.error(err);
-    process.exit(1);
-  }
-  console.log(`サーバーがポート${PORT}で待機中です`);
-});
+if (process.env.NODE_ENV !== 'test') {
+  fastify.listen({ port: PORT, host: '0.0.0.0' }, (err) => {
+    if (err) {
+      console.error(err);
+      process.exit(1);
+    }
+    console.log(`サーバーがポート${PORT}で待機中です`);
+  });
+}
+
+export default fastify;

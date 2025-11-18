@@ -54,7 +54,7 @@ cp .env.example .env
 
 キー|値
 :--|:--
-SERVER_URL|ngrokで払い出されたURL（https://は除く）
+SERVER_URL|ngrokで払い出されたURL（`https://`は除く）
 OPENAI_API_KEY|OpeAIのシークレットキー（sk-から始まる文字列）
 OPENAI_API_VERSION|2025-04-01-preview（OpenAI Realtime API の最新バージョン）
 OPENAI_MODEL|gpt-realtime（Realtime 対応のモデル）
@@ -79,6 +79,7 @@ Vonage Voice API v2 を使って任意の番号へ発信するには、以下の
 ```sh
 curl -X POST https://<サーバー>/connect \
   -H "Content-Type: application/json" \
+  -H "X-API-Key: ${VONAGE_APPLICATION_ID}" \
   -d '{
     "to": "+818012345678",
     "from": "+815031023332"
@@ -86,6 +87,8 @@ curl -X POST https://<サーバー>/connect \
 ```
 
 `from` を省略すると `VONAGE_OUTBOUND_FROM` の値が自動で利用されます。秘密鍵ファイル（例: `private.key`）は `.gitignore` されているので、ローカル/本番それぞれの環境に配置してください。
+
+`/connect` では `X-API-Key` ヘッダーを必須とし、値が `VONAGE_APPLICATION_ID` と一致しないリクエストは拒否します。バックエンドと連携するクライアントでは、このヘッダーを常に付与してください。
 
 ### テスト
 

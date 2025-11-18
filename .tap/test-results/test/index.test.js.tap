@@ -1,37 +1,49 @@
+VCR_PORT: undefined
 TAP version 14
 # Subtest: Fastify server
     # Subtest: GET /
         ok 1 - returns a status code of 200
         ok 2 - returns the correct message
         1..2
-    ok 1 - GET / # time=12.05ms
+    ok 1 - GET / # time=15.354ms
     
     # Subtest: GET /_/health
         ok 1 - returns a status code of 200
         ok 2 - returns the correct message
         1..2
-    ok 2 - GET /_/health # time=0.717ms
+    ok 2 - GET /_/health # time=0.602ms
     
     # Subtest: GET /_/metrics
         ok 1 - returns a status code of 200
         ok 2 - returns the correct message
         1..2
-    ok 3 - GET /_/metrics # time=0.416ms
+    ok 3 - GET /_/metrics # time=0.417ms
     
 undefined
     # Subtest: POST /event
         ok 1 - returns a status code of 200
         ok 2 - returns the correct message
         1..2
-    ok 4 - POST /event # time=1.953ms
+    ok 4 - POST /event # time=1.328ms
     
-    # Subtest: POST /incoming-call
+🐞 /answer called. katsumi.jp.ngrok.io
+    # Subtest: POST /answer
         ok 1 - returns a status code of 200
         ok 2 - returns the correct NCCO response
         1..2
-    ok 5 - POST /incoming-call # time=0.882ms
+    ok 5 - POST /answer # time=0.929ms
     
-    1..5
-ok 1 - Fastify server # time=40.886ms
+    # Subtest: POST /connect without API key returns 401
+        ok 1 - requires API key
+        1..1
+    ok 6 - POST /connect without API key returns 401 # time=2.193ms
+    
+    # Subtest: POST /connect with invalid API key returns 403
+        ok 1 - rejects invalid API key
+        1..1
+    ok 7 - POST /connect with invalid API key returns 403 # time=0.75ms
+    
+    1..7
+ok 1 - Fastify server # time=26.245ms
 
 1..1

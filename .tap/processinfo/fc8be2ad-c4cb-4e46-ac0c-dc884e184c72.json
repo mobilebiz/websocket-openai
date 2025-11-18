@@ -1,8 +1,8 @@
 {
-  "date": "2025-11-18T06:29:58.289Z",
+  "date": "2025-11-18T10:15:11.113Z",
   "argv": [
     "/usr/local/bin/node",
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/test/audio-converter.test.js"
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/test/index.test.js"
   ],
   "execArgv": [
     "--import=file:///Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@isaacs/ts-node-temp-fork-for-pr-2009/import.mjs",
@@ -12,23 +12,23 @@
   ],
   "NODE_OPTIONS": "\"--import=file:///Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/processinfo/dist/esm/import.mjs\"",
   "cwd": "/Users/katsumi/Documents/workspace/vonage/websocket-openai",
-  "pid": 69177,
-  "ppid": 69140,
+  "pid": 43391,
+  "ppid": 43372,
   "parent": null,
-  "uuid": "59c46098-1565-4f54-b76c-99fffd9170a4",
+  "uuid": "fc8be2ad-c4cb-4e46-ac0c-dc884e184c72",
   "files": [
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/test/audio-converter.test.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/test/index.test.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@isaacs/ts-node-temp-fork-for-pr-2009/import.mjs",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@isaacs/ts-node-temp-fork-for-pr-2009/import-loader.mjs",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/mock/dist/esm/import.mjs",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/mock/dist/esm/mock-service.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/stack/dist/esm/index.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/dist/esm/index.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/dist/esm/is-relative-require.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/mock/dist/esm/export-line.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/mock/dist/esm/munge-mocks.js",
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/dist/esm/is-relative-require.js",
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/mock/dist/esm/resolve-mock-entry-point.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/mock/dist/esm/service-key.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/mock/dist/esm/resolve-mock-entry-point.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/stack/dist/esm/call-site-like.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/stack/dist/esm/require-resolve.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/dist/esm/get-all-conditional-values.js",
@@ -43,19 +43,19 @@
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/dist/esm/get-conditional-values-list.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/dist/esm/errors.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/dist/esm/file-exists.js",
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/dist/esm/resolve-dependency-export.js",
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/dist/esm/resolve-package-import.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/dist/esm/find-dep-package.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/dist/esm/read-pkg.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/dist/esm/star-glob.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/dist/esm/to-file-url.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/dist/esm/to-path.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/dist/esm/get-named-exports-list.js",
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/dist/esm/read-pkg.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/dist/esm/resolve-export.js",
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/dist/esm/star-glob.js",
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/dist/esm/find-dep-package.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/dist/esm/resolve-dependency-export.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/dist/esm/resolve-package-import.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/walk-up-path/dist/esm/index.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/dist/esm/read-json.js",
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/dist/esm/find-star-match.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/glob/dist/esm/index.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/dist/esm/find-star-match.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/glob/node_modules/minimatch/dist/esm/index.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/glob/dist/esm/glob.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/glob/dist/esm/has-magic.js",
@@ -64,25 +64,24 @@
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/glob/node_modules/minimatch/dist/esm/ast.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/glob/node_modules/minimatch/dist/esm/escape.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/glob/node_modules/minimatch/dist/esm/unescape.js",
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/glob/dist/esm/pattern.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/path-scurry/dist/esm/index.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/glob/dist/esm/pattern.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/glob/dist/esm/walker.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/glob/node_modules/minimatch/dist/esm/brace-expressions.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/minipass/dist/esm/index.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/glob/dist/esm/processor.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/path-scurry/node_modules/lru-cache/dist/esm/index.js",
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/glob/node_modules/minimatch/dist/esm/brace-expressions.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/mock/dist/esm/loader.mjs",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/mock/dist/esm/hooks.mjs",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/mock/dist/esm/mock-service-client.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap/dist/esm/index.js",
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/lib/audio-converter.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap/dist/esm/main.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/core/dist/esm/index.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/test/dist/esm/index.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/core/dist/esm/tap-file.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/core/dist/esm/base.js",
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/core/dist/esm/counts.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/core/dist/esm/extra-from-error.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/core/dist/esm/counts.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/core/dist/esm/lists.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/core/dist/esm/main-script.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/core/dist/esm/minimal.js",
@@ -105,10 +104,10 @@
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/core/dist/esm/diags.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/core/dist/esm/message-from-error.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/processinfo/dist/esm/index.js",
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/core/dist/esm/implicit-end-sigil.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/is-actual-promise/dist/esm/index.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/trivial-deferred/dist/mjs/index.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/core/dist/esm/esc.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/core/dist/esm/implicit-end-sigil.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/after/dist/esm/index.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/after-each/dist/esm/index.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/asserts/dist/esm/index.js",
@@ -124,69 +123,67 @@
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/spawn/dist/esm/index.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/stdin/dist/esm/index.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/typescript/dist/esm/index.js",
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/worker/dist/esm/index.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/jackspeak/dist/esm/index.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/worker/dist/esm/index.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-yaml/dist/esm/index.js",
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-parser/dist/esm/final-results.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-parser/dist/esm/line-type.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-parser/dist/esm/final-results.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-parser/dist/esm/parse-directive.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-parser/dist/esm/plan.js",
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-parser/dist/esm/statics.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-parser/dist/esm/result.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-parser/dist/esm/statics.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-parser/dist/esm/escape.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/core/dist/esm/clean-yaml-object.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/processinfo/dist/esm/child_process.js",
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/processinfo/dist/esm/json-file.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/processinfo/dist/esm/process-info-node.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/processinfo/dist/esm/json-file.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/function-loop/dist/mjs/index.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tcompare/dist/esm/index.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/asserts/dist/esm/normalize-throws-args.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/snapshot/dist/esm/clean-cwd.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/snapshot/dist/esm/provider.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/rimraf/dist/esm/index.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/fixture/dist/esm/fixture.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/node-serialize/dist/esm/serialize.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/mock/dist/esm/mock-require.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@isaacs/cliui/index.mjs",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-yaml/dist/esm/parse.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-yaml/dist/esm/stringify.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-parser/dist/esm/final-plan.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-parser/dist/esm/brace-patterns.js",
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/function-loop/dist/mjs/index.js",
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tcompare/dist/esm/index.js",
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/rimraf/dist/esm/index.js",
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/asserts/dist/esm/normalize-throws-args.js",
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/fixture/dist/esm/fixture.js",
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/node-serialize/dist/esm/serialize.js",
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/snapshot/dist/esm/clean-cwd.js",
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/snapshot/dist/esm/provider.js",
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@isaacs/cliui/index.mjs",
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/mock/dist/esm/mock-require.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/diff/lib/index.mjs",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/processinfo/dist/esm/spawn-opts.js",
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-yaml/dist/esm/types/index.js",
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tcompare/dist/esm/format.js",
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tcompare/dist/esm/has-strict.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tcompare/dist/esm/has.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tcompare/dist/esm/has-strict.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tcompare/dist/esm/format.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tcompare/dist/esm/match-only.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tcompare/dist/esm/match-strict.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tcompare/dist/esm/match-only-strict.js",
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tcompare/dist/esm/match.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tcompare/dist/esm/same.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tcompare/dist/esm/match.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tcompare/dist/esm/strict.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tcompare/dist/esm/styles.js",
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/rimraf/dist/esm/opt-arg.js",
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/rimraf/dist/esm/rimraf-manual.js",
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/rimraf/dist/esm/path-arg.js",
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/rimraf/dist/esm/rimraf-move-remove.js",
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/rimraf/dist/esm/rimraf-windows.js",
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/rimraf/dist/esm/rimraf-native.js",
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/rimraf/dist/esm/use-native.js",
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/rimraf/dist/esm/rimraf-posix.js",
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/mkdirp/dist/mjs/index.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/snapshot/dist/esm/require.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/rimraf/dist/esm/opt-arg.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/rimraf/dist/esm/path-arg.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/rimraf/dist/esm/rimraf-manual.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/rimraf/dist/esm/rimraf-move-remove.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/rimraf/dist/esm/rimraf-native.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/rimraf/dist/esm/rimraf-posix.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/rimraf/dist/esm/rimraf-windows.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/rimraf/dist/esm/use-native.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/mkdirp/dist/mjs/index.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/error-serdes/dist/esm/index.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/node-serialize/dist/esm/comment.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/node-serialize/dist/esm/on-add.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/node-serialize/dist/esm/print-messages.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/node-serialize/dist/esm/stdio.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/node-serialize/dist/esm/test-map.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-yaml/dist/esm/types/index.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@isaacs/cliui/build/lib/index.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@isaacs/cliui/node_modules/string-width/index.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/strip-ansi/index.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/wrap-ansi/index.js",
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-yaml/dist/esm/types/date.js",
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-yaml/dist/esm/types/timestamp.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tcompare/dist/esm/react-element-to-jsx-string.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/rimraf/dist/esm/platform.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/rimraf/dist/esm/default-tmp.js",
@@ -212,13 +209,37 @@
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/node-serialize/dist/esm/test-point-message-data.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/node-serialize/dist/esm/test-point-results.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/node-serialize/dist/esm/test-results.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-yaml/dist/esm/types/date.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-yaml/dist/esm/types/timestamp.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/strip-ansi/node_modules/ansi-regex/index.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/wrap-ansi/node_modules/string-width/index.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/ansi-styles/index.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/mkdirp/dist/mjs/find-made.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/node-serialize/dist/esm/loc-from-callsite.js",
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/node-serialize/dist/esm/result-to-error.js",
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/node-serialize/dist/esm/pretty-diff.js"
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/node-serialize/dist/esm/pretty-diff.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/index.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/ws/wrapper.mjs",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/node-fetch/src/index.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/lib/audio-converter.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/put_name.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/get_weather.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/data-uri-to-buffer/dist/index.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/node-fetch/src/body.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/node-fetch/src/response.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/node-fetch/src/headers.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/node-fetch/src/request.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/node-fetch/src/errors/fetch-error.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/node-fetch/src/errors/abort-error.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/node-fetch/src/utils/is-redirect.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/formdata-polyfill/esm.min.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/node-fetch/src/utils/is.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/node-fetch/src/utils/referrer.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/fetch-blob/from.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/fetch-blob/index.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/node-fetch/src/utils/get-search.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/node-fetch/src/errors/base.js",
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/fetch-blob/file.js"
   ],
   "sources": {
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/mock/dist/esm/import.mjs": [
@@ -233,20 +254,20 @@
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/dist/esm/index.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/src/index.ts"
     ],
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/dist/esm/is-relative-require.js": [
+      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/src/is-relative-require.ts"
+    ],
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/mock/dist/esm/export-line.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/mock/src/export-line.ts"
     ],
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/mock/dist/esm/munge-mocks.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/mock/src/munge-mocks.ts"
     ],
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/dist/esm/is-relative-require.js": [
-      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/src/is-relative-require.ts"
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/mock/dist/esm/service-key.js": [
+      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/mock/src/service-key.ts"
     ],
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/mock/dist/esm/resolve-mock-entry-point.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/mock/src/resolve-mock-entry-point.ts"
-    ],
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/mock/dist/esm/service-key.js": [
-      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/mock/src/service-key.ts"
     ],
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/stack/dist/esm/call-site-like.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/stack/src/call-site-like.ts"
@@ -269,6 +290,9 @@
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/dist/esm/resolve-all-local-imports.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/src/resolve-all-local-imports.ts"
     ],
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/stack/dist/esm/parse.js": [
+      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/stack/src/parse.ts"
+    ],
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/dist/esm/resolve-conditional-value.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/src/resolve-conditional-value.ts"
     ],
@@ -277,9 +301,6 @@
     ],
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/dist/esm/is-windows.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/src/is-windows.ts"
-    ],
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/stack/dist/esm/parse.js": [
-      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/stack/src/parse.ts"
     ],
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/dist/esm/get-conditional-values-list.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/src/get-conditional-values-list.ts"
@@ -290,11 +311,14 @@
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/dist/esm/file-exists.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/src/file-exists.ts"
     ],
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/dist/esm/resolve-dependency-export.js": [
-      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/src/resolve-dependency-export.ts"
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/dist/esm/find-dep-package.js": [
+      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/src/find-dep-package.ts"
     ],
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/dist/esm/resolve-package-import.js": [
-      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/src/resolve-package-import.ts"
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/dist/esm/read-pkg.js": [
+      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/src/read-pkg.ts"
+    ],
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/dist/esm/star-glob.js": [
+      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/src/star-glob.ts"
     ],
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/dist/esm/to-file-url.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/src/to-file-url.ts"
@@ -305,17 +329,14 @@
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/dist/esm/get-named-exports-list.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/src/get-named-exports-list.ts"
     ],
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/dist/esm/read-pkg.js": [
-      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/src/read-pkg.ts"
-    ],
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/dist/esm/resolve-export.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/src/resolve-export.ts"
     ],
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/dist/esm/star-glob.js": [
-      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/src/star-glob.ts"
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/dist/esm/resolve-dependency-export.js": [
+      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/src/resolve-dependency-export.ts"
     ],
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/dist/esm/find-dep-package.js": [
-      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/src/find-dep-package.ts"
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/dist/esm/resolve-package-import.js": [
+      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/src/resolve-package-import.ts"
     ],
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/walk-up-path/dist/esm/index.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/walk-up-path/src/index.ts"
@@ -323,11 +344,11 @@
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/dist/esm/read-json.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/src/read-json.ts"
     ],
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/dist/esm/find-star-match.js": [
-      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/src/find-star-match.ts"
-    ],
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/glob/dist/esm/index.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/glob/src/index.ts"
+    ],
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/dist/esm/find-star-match.js": [
+      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/resolve-import/src/find-star-match.ts"
     ],
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/glob/node_modules/minimatch/dist/esm/index.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/glob/node_modules/minimatch/src/index.ts"
@@ -353,14 +374,17 @@
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/glob/node_modules/minimatch/dist/esm/unescape.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/glob/node_modules/minimatch/src/unescape.ts"
     ],
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/glob/dist/esm/pattern.js": [
-      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/glob/src/pattern.ts"
-    ],
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/path-scurry/dist/esm/index.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/path-scurry/src/index.ts"
     ],
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/glob/dist/esm/pattern.js": [
+      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/glob/src/pattern.ts"
+    ],
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/glob/dist/esm/walker.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/glob/src/walker.ts"
+    ],
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/glob/node_modules/minimatch/dist/esm/brace-expressions.js": [
+      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/glob/node_modules/minimatch/src/brace-expressions.ts"
     ],
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/minipass/dist/esm/index.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/minipass/src/index.ts"
@@ -370,9 +394,6 @@
     ],
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/path-scurry/node_modules/lru-cache/dist/esm/index.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/path-scurry/node_modules/lru-cache/src/index.ts"
-    ],
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/glob/node_modules/minimatch/dist/esm/brace-expressions.js": [
-      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/glob/node_modules/minimatch/src/brace-expressions.ts"
     ],
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap/dist/esm/index.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap/src/index.ts"
@@ -392,11 +413,11 @@
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/core/dist/esm/base.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/core/src/base.ts"
     ],
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/core/dist/esm/counts.js": [
-      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/core/src/counts.ts"
-    ],
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/core/dist/esm/extra-from-error.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/core/src/extra-from-error.ts"
+    ],
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/core/dist/esm/counts.js": [
+      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/core/src/counts.ts"
     ],
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/core/dist/esm/lists.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/core/src/lists.ts"
@@ -464,9 +485,6 @@
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/processinfo/dist/esm/index.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/processinfo/src/index.ts"
     ],
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/core/dist/esm/implicit-end-sigil.js": [
-      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/core/src/implicit-end-sigil.ts"
-    ],
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/is-actual-promise/dist/esm/index.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/is-actual-promise/src/index.ts"
     ],
@@ -475,6 +493,9 @@
     ],
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/core/dist/esm/esc.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/core/src/esc.ts"
+    ],
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/core/dist/esm/implicit-end-sigil.js": [
+      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/core/src/implicit-end-sigil.ts"
     ],
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/after/dist/esm/index.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/after/src/index.ts"
@@ -521,20 +542,20 @@
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/typescript/dist/esm/index.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/typescript/src/index.ts"
     ],
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/worker/dist/esm/index.js": [
-      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/worker/src/index.ts"
-    ],
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/jackspeak/dist/esm/index.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/jackspeak/src/index.ts"
+    ],
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/worker/dist/esm/index.js": [
+      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/worker/src/index.ts"
     ],
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-yaml/dist/esm/index.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-yaml/src/index.ts"
     ],
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-parser/dist/esm/final-results.js": [
-      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-parser/src/final-results.ts"
-    ],
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-parser/dist/esm/line-type.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-parser/src/line-type.ts"
+    ],
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-parser/dist/esm/final-results.js": [
+      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-parser/src/final-results.ts"
     ],
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-parser/dist/esm/parse-directive.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-parser/src/parse-directive.ts"
@@ -542,11 +563,11 @@
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-parser/dist/esm/plan.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-parser/src/plan.ts"
     ],
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-parser/dist/esm/statics.js": [
-      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-parser/src/statics.ts"
-    ],
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-parser/dist/esm/result.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-parser/src/result.ts"
+    ],
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-parser/dist/esm/statics.js": [
+      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-parser/src/statics.ts"
     ],
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-parser/dist/esm/escape.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-parser/src/escape.ts"
@@ -557,11 +578,38 @@
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/processinfo/dist/esm/child_process.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/processinfo/src/child_process.ts"
     ],
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/processinfo/dist/esm/process-info-node.js": [
+      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/processinfo/src/process-info-node.ts"
+    ],
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/processinfo/dist/esm/json-file.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/processinfo/src/json-file.ts"
     ],
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/processinfo/dist/esm/process-info-node.js": [
-      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/processinfo/src/process-info-node.ts"
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/function-loop/dist/mjs/index.js": [
+      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/function-loop/src/index.ts"
+    ],
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tcompare/dist/esm/index.js": [
+      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tcompare/src/index.ts"
+    ],
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/asserts/dist/esm/normalize-throws-args.js": [
+      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/asserts/src/normalize-throws-args.ts"
+    ],
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/snapshot/dist/esm/clean-cwd.js": [
+      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/snapshot/src/clean-cwd.ts"
+    ],
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/snapshot/dist/esm/provider.js": [
+      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/snapshot/src/provider.ts"
+    ],
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/rimraf/dist/esm/index.js": [
+      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/rimraf/src/index.ts"
+    ],
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/fixture/dist/esm/fixture.js": [
+      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/fixture/src/fixture.ts"
+    ],
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/node-serialize/dist/esm/serialize.js": [
+      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/node-serialize/src/serialize.ts"
+    ],
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/mock/dist/esm/mock-require.js": [
+      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/mock/src/mock-require.ts"
     ],
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-yaml/dist/esm/parse.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-yaml/src/parse.ts"
@@ -575,47 +623,17 @@
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-parser/dist/esm/brace-patterns.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-parser/src/brace-patterns.ts"
     ],
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/function-loop/dist/mjs/index.js": [
-      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/function-loop/src/index.ts"
-    ],
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tcompare/dist/esm/index.js": [
-      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tcompare/src/index.ts"
-    ],
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/rimraf/dist/esm/index.js": [
-      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/rimraf/src/index.ts"
-    ],
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/asserts/dist/esm/normalize-throws-args.js": [
-      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/asserts/src/normalize-throws-args.ts"
-    ],
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/fixture/dist/esm/fixture.js": [
-      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/fixture/src/fixture.ts"
-    ],
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/node-serialize/dist/esm/serialize.js": [
-      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/node-serialize/src/serialize.ts"
-    ],
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/snapshot/dist/esm/clean-cwd.js": [
-      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/snapshot/src/clean-cwd.ts"
-    ],
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/snapshot/dist/esm/provider.js": [
-      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/snapshot/src/provider.ts"
-    ],
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/mock/dist/esm/mock-require.js": [
-      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/mock/src/mock-require.ts"
-    ],
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/processinfo/dist/esm/spawn-opts.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/processinfo/src/spawn-opts.ts"
     ],
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-yaml/dist/esm/types/index.js": [
-      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-yaml/src/types/index.ts"
-    ],
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tcompare/dist/esm/format.js": [
-      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tcompare/src/format.ts"
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tcompare/dist/esm/has.js": [
+      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tcompare/src/has.ts"
     ],
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tcompare/dist/esm/has-strict.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tcompare/src/has-strict.ts"
     ],
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tcompare/dist/esm/has.js": [
-      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tcompare/src/has.ts"
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tcompare/dist/esm/format.js": [
+      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tcompare/src/format.ts"
     ],
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tcompare/dist/esm/match-only.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tcompare/src/match-only.ts"
@@ -626,11 +644,11 @@
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tcompare/dist/esm/match-only-strict.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tcompare/src/match-only-strict.ts"
     ],
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tcompare/dist/esm/match.js": [
-      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tcompare/src/match.ts"
-    ],
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tcompare/dist/esm/same.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tcompare/src/same.ts"
+    ],
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tcompare/dist/esm/match.js": [
+      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tcompare/src/match.ts"
     ],
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tcompare/dist/esm/strict.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tcompare/src/strict.ts"
@@ -638,35 +656,35 @@
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tcompare/dist/esm/styles.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tcompare/src/styles.ts"
     ],
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/snapshot/dist/esm/require.js": [
+      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/snapshot/src/require.ts"
+    ],
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/rimraf/dist/esm/opt-arg.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/rimraf/src/opt-arg.ts"
-    ],
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/rimraf/dist/esm/rimraf-manual.js": [
-      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/rimraf/src/rimraf-manual.ts"
     ],
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/rimraf/dist/esm/path-arg.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/rimraf/src/path-arg.ts"
     ],
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/rimraf/dist/esm/rimraf-manual.js": [
+      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/rimraf/src/rimraf-manual.ts"
+    ],
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/rimraf/dist/esm/rimraf-move-remove.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/rimraf/src/rimraf-move-remove.ts"
-    ],
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/rimraf/dist/esm/rimraf-windows.js": [
-      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/rimraf/src/rimraf-windows.ts"
     ],
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/rimraf/dist/esm/rimraf-native.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/rimraf/src/rimraf-native.ts"
     ],
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/rimraf/dist/esm/use-native.js": [
-      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/rimraf/src/use-native.ts"
-    ],
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/rimraf/dist/esm/rimraf-posix.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/rimraf/src/rimraf-posix.ts"
     ],
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/rimraf/dist/esm/rimraf-windows.js": [
+      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/rimraf/src/rimraf-windows.ts"
+    ],
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/rimraf/dist/esm/use-native.js": [
+      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/rimraf/src/use-native.ts"
+    ],
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/mkdirp/dist/mjs/index.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/mkdirp/src/index.ts"
-    ],
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/snapshot/dist/esm/require.js": [
-      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/snapshot/src/require.ts"
     ],
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/error-serdes/dist/esm/index.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/error-serdes/src/index.ts"
@@ -686,11 +704,8 @@
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/node-serialize/dist/esm/test-map.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/node-serialize/src/test-map.ts"
     ],
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-yaml/dist/esm/types/date.js": [
-      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-yaml/src/types/date.ts"
-    ],
-    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-yaml/dist/esm/types/timestamp.js": [
-      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-yaml/src/types/timestamp.ts"
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-yaml/dist/esm/types/index.js": [
+      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-yaml/src/types/index.ts"
     ],
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tcompare/dist/esm/react-element-to-jsx-string.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tcompare/src/react-element-to-jsx-string.ts"
@@ -767,6 +782,12 @@
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/node-serialize/dist/esm/test-results.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/node-serialize/src/test-results.ts"
     ],
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-yaml/dist/esm/types/date.js": [
+      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-yaml/src/types/date.ts"
+    ],
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-yaml/dist/esm/types/timestamp.js": [
+      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/tap-yaml/src/types/timestamp.ts"
+    ],
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/mkdirp/dist/mjs/find-made.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/mkdirp/src/find-made.ts"
     ],
@@ -778,11 +799,14 @@
     ],
     "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/node-serialize/dist/esm/pretty-diff.js": [
       "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/@tapjs/node-serialize/src/pretty-diff.ts"
+    ],
+    "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/data-uri-to-buffer/dist/index.js": [
+      "/Users/katsumi/Documents/workspace/vonage/websocket-openai/node_modules/data-uri-to-buffer/src/index.ts"
     ]
   },
-  "root": "59c46098-1565-4f54-b76c-99fffd9170a4",
-  "externalID": "test/audio-converter.test.js",
+  "root": "fc8be2ad-c4cb-4e46-ac0c-dc884e184c72",
+  "externalID": "test/index.test.js",
   "code": 0,
   "signal": null,
-  "runtime": 564.165167
+  "runtime": 703.773
 }
