@@ -9,9 +9,12 @@ sequenceDiagram
     participant user
     participant vonage
     participant OpenAI Realtime API
+    participant External Service
     
     user->>vonage: Input
     vonage->>OpenAI Realtime API: WebSocket
+    OpenAI Realtime API->>External Service: Function Calling
+    External Service-->>OpenAI Realtime API: Data
     OpenAI Realtime API-->>vonage: WebSocket
     vonage-->>user: Response
 ```
