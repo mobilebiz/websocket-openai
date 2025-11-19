@@ -85,7 +85,7 @@ curl -X POST https://<サーバー>/connect \
   -H "X-API-Key: ${VONAGE_APPLICATION_ID}" \
   -d '{
     "to": "+818012345678",
-    "from": "+815031023332"
+    "from": "+815012345678"
   }'
 ```
 
