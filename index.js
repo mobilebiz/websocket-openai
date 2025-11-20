@@ -23,7 +23,8 @@ const {
   VONAGE_APPLICATION_ID,
   VONAGE_PRIVATE_KEY_PATH,
   VONAGE_OUTBOUND_FROM,
-  VONAGE_PRIVATE_KEY
+  VONAGE_PRIVATE_KEY,
+  VONAGE_TRANSPORT_NUMBER
 } = process.env;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY_SECRET || process.env.OPENAI_API_KEY;
 
@@ -220,6 +221,17 @@ fastify.post('/connect', async (request, reply) => {
 // 着信コールへの応答を生成し、Vonage の WebSocket ストリームに接続させる
 fastify.all('/answer', async (request, reply) => {
   console.log(`🐞 /answer called. ${SERVER_URL}`);
+  console.log('Query:', request.query);
+  console.log('Body:', request.body);
+
+  const query = request.query || {};
+  const body = request.body || {};
+  const from = query.from || body.from;
+  const to = query.to || body.to;
+  const uuid = query.uuid || body.uuid;
+  const caller = from || 'unknown';
+  const called = to || 'unknown';
+
   // Vonage に返す NCCO: 簡単な挨拶のあと WebSocket へ接続
   const nccoResponse = [
     {
@@ -232,7 +244,7 @@ fastify.all('/answer', async (request, reply) => {
       endpoint: [
         {
           type: 'websocket',
-          uri: `wss://${SERVER_URL}/media-stream`,
+          uri: `wss://${SERVER_URL}/media-stream?caller=${caller}&called=${called}&uuid=${uuid}`,
           contentType: 'audio/l16;rate=16000',
         }
       ]
@@ -246,6 +258,9 @@ fastify.all('/answer', async (request, reply) => {
 fastify.register(async (fastify) => {
   fastify.get('/media-stream', { websocket: true }, (connection, req) => {
     console.log('クライアントが接続されました');
+
+    const { caller, called, uuid } = req.query || {};
+    console.log(`Call Context - Caller: ${caller}, Called: ${called}, UUID: ${uuid}`);
 
     // 会話の状態やタイミングを記録する変数
     // let responseId = null;
@@ -272,7 +287,14 @@ fastify.register(async (fastify) => {
           input_audio_format: 'pcm16',
           output_audio_format: 'pcm16',
           voice: 'alloy',
-          instructions: SYSTEM_MESSAGE,
+          voice: 'alloy',
+          instructions: `${SYSTEM_MESSAGE}
+          
+電話番号情報:
+- 発信者番号（自分の電話番号）: ${caller}
+- 着信番号（かけた先の番号）: ${called}
+電話番号を聞かれた場合、先頭が81から始まる番号であれば、それを0に置き換えて、日本のローカル番号として回答してください。
+`,
           modalities: ["text", "audio"],
           temperature: 0.8,
           tools: [
@@ -304,6 +326,21 @@ fastify.register(async (fastify) => {
                   }
                 },
                 required: ["name"]
+              }
+            },
+            {
+              type: "function",
+              name: "transfer_call",
+              description: "通話を別の電話番号に転送します",
+              parameters: {
+                type: "object",
+                properties: {
+                  destination: {
+                    type: "string",
+                    description: "転送先の電話番号 (E.164形式)。指定がない場合は既定の番号に転送されます。"
+                  }
+                },
+                required: []
               }
             }
           ],
@@ -502,6 +539,96 @@ fastify.register(async (fastify) => {
 
               openAiWs.send(JSON.stringify(item));
               openAiWs.send(JSON.stringify({ type: 'response.create' }));
+            } else if (response.name === 'transfer_call') {
+              const { destination } = args;
+              const transferTo = destination || VONAGE_TRANSPORT_NUMBER;
+
+              if (!transferTo) {
+                const errorItem = {
+                  type: 'conversation.item.create',
+                  item: {
+                    type: 'function_call_output',
+                    call_id: response.call_id,
+                    output: JSON.stringify({ error: '転送先が指定されておらず、環境変数 VONAGE_TRANSPORT_NUMBER も設定されていません。' })
+                  }
+                };
+                openAiWs.send(JSON.stringify(errorItem));
+                openAiWs.send(JSON.stringify({ type: 'response.create' }));
+                return;
+              }
+
+              console.log(`📞 Transferring call to ${transferTo} (UUID: ${uuid})`);
+
+              // Vonage API を使って通話を転送
+              if (uuid) {
+                const jwtToken = createVonageJwt();
+                const transferPayload = {
+                  action: 'transfer',
+                  destination: {
+                    type: 'ncco',
+                    ncco: [
+                      {
+                        action: 'connect',
+                        endpoint: [{ type: 'phone', number: transferTo }],
+                        from: called
+                      }
+                    ]
+                  }
+                };
+
+                fetch(`https://api.nexmo.com/v1/calls/${uuid}`, {
+                  method: 'PUT',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${jwtToken}`
+                  },
+                  body: JSON.stringify(transferPayload)
+                })
+                  .then(async (res) => {
+                    if (res.ok) {
+                      console.log('転送成功');
+                      const item = {
+                        type: 'conversation.item.create',
+                        item: {
+                          type: 'function_call_output',
+                          call_id: response.call_id,
+                          output: JSON.stringify({ status: 'transfer_initiated' })
+                        }
+                      };
+                      openAiWs.send(JSON.stringify(item));
+                      // 転送が始まるとWebSocketは切れるはずだが、念のため完了を通知
+                    } else {
+                      const errorText = await res.text();
+                      console.error('転送失敗:', errorText);
+                      throw new Error(`Transfer failed: ${res.statusText}`);
+                    }
+                  })
+                  .catch((err) => {
+                    console.error('転送エラー:', err);
+                    const errorItem = {
+                      type: 'conversation.item.create',
+                      item: {
+                        type: 'function_call_output',
+                        call_id: response.call_id,
+                        output: JSON.stringify({ error: '転送に失敗しました' })
+                      }
+                    };
+                    openAiWs.send(JSON.stringify(errorItem));
+                    openAiWs.send(JSON.stringify({ type: 'response.create' }));
+                  });
+              } else {
+                console.error('UUIDがないため転送できません');
+                const errorItem = {
+                  type: 'conversation.item.create',
+                  item: {
+                    type: 'function_call_output',
+                    call_id: response.call_id,
+                    output: JSON.stringify({ error: '通話UUIDが見つからないため転送できません' })
+                  }
+                };
+                openAiWs.send(JSON.stringify(errorItem));
+                openAiWs.send(JSON.stringify({ type: 'response.create' }));
+              }
             }
           } catch (error) {
             console.error('関数呼び出しの処理中にエラーが発生しました:', error);
