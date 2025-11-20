@@ -11,6 +11,8 @@ import { randomUUID } from 'crypto';
 import { pcm24To16 } from './lib/audio-converter.js';
 import { getWeatherInfo } from './get_weather.js';
 import { putName } from './put_name.js';
+import { createVonageJwt } from './lib/vonage-jwt.js';
+import { transferCall } from './transfer-call.js';
 
 // Vonage Voice による音声を受け取り、OpenAI Realtime API へ転送する役割を担うサーバー
 
@@ -21,9 +23,7 @@ const {
   OPENAI_MODEL,
   SERVER_URL,
   VONAGE_APPLICATION_ID,
-  VONAGE_PRIVATE_KEY_PATH,
   VONAGE_OUTBOUND_FROM,
-  VONAGE_PRIVATE_KEY,
   VONAGE_TRANSPORT_NUMBER
 } = process.env;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY_SECRET || process.env.OPENAI_API_KEY;
@@ -87,43 +87,6 @@ const buildPublicUrl = (pathname = '') => {
   const hasProtocol = SERVER_URL.startsWith('http://') || SERVER_URL.startsWith('https://');
   const baseUrl = hasProtocol ? SERVER_URL : `https://${SERVER_URL}`;
   return `${baseUrl}${pathname}`;
-};
-
-const resolveVonagePrivateKey = () => {
-  if (VONAGE_PRIVATE_KEY && VONAGE_PRIVATE_KEY.trim()) {
-    return VONAGE_PRIVATE_KEY.trim();
-  }
-
-  if (!VONAGE_PRIVATE_KEY_PATH) {
-    return null;
-  }
-
-  const resolvedPath = path.isAbsolute(VONAGE_PRIVATE_KEY_PATH)
-    ? VONAGE_PRIVATE_KEY_PATH
-    : path.resolve(process.cwd(), VONAGE_PRIVATE_KEY_PATH);
-  try {
-    return fs.readFileSync(resolvedPath, 'utf8').trim();
-  } catch (error) {
-    console.warn(`Vonageのプライベートキーを ${resolvedPath} から読み込めませんでした: ${error.message}`);
-    return null;
-  }
-};
-
-const vonagePrivateKey = resolveVonagePrivateKey();
-
-const createVonageJwt = () => {
-  if (!VONAGE_APPLICATION_ID || !vonagePrivateKey) {
-    throw new Error('VonageのアプリケーションIDまたはプライベートキーが設定されていません。');
-  }
-  const now = Math.floor(Date.now() / 1000);
-  const payload = {
-    application_id: VONAGE_APPLICATION_ID,
-    iat: now,
-    exp: now + 60 * 5,
-    jti: randomUUID()
-  };
-
-  return jwt.sign(payload, vonagePrivateKey, { algorithm: 'RS256' });
 };
 // const SYSTEM_MESSAGE = 'あなたは明るくフレンドリーなAIアシスタントです。ユーザーが興味を持っている話題について会話し、適切な情報を提供します。ジョークや楽しい話題を交えながら、常にポジティブでいてください。なお、会話はすべて日本語で行いますが、ユーザーが言語を指定した場合は、その言語で回答をしてください。また、会話の最初は「こんにちは。今日はどのようなお話をしましょうか？」と挨拶をしてください。';
 // const SYSTEM_MESSAGE = 'You are a bright and friendly AI assistant. You converse about topics of interest to the user and provide relevant information. Stay positive at all times with jokes and fun topics.';
@@ -559,71 +522,26 @@ fastify.register(async (fastify) => {
 
               console.log(`📞 Transferring call to ${transferTo} (UUID: ${uuid})`);
 
-              // Vonage API を使って通話を転送
-              if (uuid) {
-                const jwtToken = createVonageJwt();
-                const transferPayload = {
-                  action: 'transfer',
-                  destination: {
-                    type: 'ncco',
-                    ncco: [
-                      {
-                        action: 'connect',
-                        endpoint: [{ type: 'phone', number: transferTo }],
-                        from: called
-                      }
-                    ]
+              try {
+                await transferCall(uuid, transferTo, called);
+                console.log('転送成功');
+                const item = {
+                  type: 'conversation.item.create',
+                  item: {
+                    type: 'function_call_output',
+                    call_id: response.call_id,
+                    output: JSON.stringify({ status: 'transfer_initiated' })
                   }
                 };
-
-                fetch(`https://api.nexmo.com/v1/calls/${uuid}`, {
-                  method: 'PUT',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${jwtToken}`
-                  },
-                  body: JSON.stringify(transferPayload)
-                })
-                  .then(async (res) => {
-                    if (res.ok) {
-                      console.log('転送成功');
-                      const item = {
-                        type: 'conversation.item.create',
-                        item: {
-                          type: 'function_call_output',
-                          call_id: response.call_id,
-                          output: JSON.stringify({ status: 'transfer_initiated' })
-                        }
-                      };
-                      openAiWs.send(JSON.stringify(item));
-                      // 転送が始まるとWebSocketは切れるはずだが、念のため完了を通知
-                    } else {
-                      const errorText = await res.text();
-                      console.error('転送失敗:', errorText);
-                      throw new Error(`Transfer failed: ${res.statusText}`);
-                    }
-                  })
-                  .catch((err) => {
-                    console.error('転送エラー:', err);
-                    const errorItem = {
-                      type: 'conversation.item.create',
-                      item: {
-                        type: 'function_call_output',
-                        call_id: response.call_id,
-                        output: JSON.stringify({ error: '転送に失敗しました' })
-                      }
-                    };
-                    openAiWs.send(JSON.stringify(errorItem));
-                    openAiWs.send(JSON.stringify({ type: 'response.create' }));
-                  });
-              } else {
-                console.error('UUIDがないため転送できません');
+                openAiWs.send(JSON.stringify(item));
+              } catch (err) {
+                console.error('転送エラー:', err);
                 const errorItem = {
                   type: 'conversation.item.create',
                   item: {
                     type: 'function_call_output',
                     call_id: response.call_id,
-                    output: JSON.stringify({ error: '通話UUIDが見つからないため転送できません' })
+                    output: JSON.stringify({ error: '転送に失敗しました: ' + err.message })
                   }
                 };
                 openAiWs.send(JSON.stringify(errorItem));
