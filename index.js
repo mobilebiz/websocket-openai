@@ -10,7 +10,6 @@ import jwt from 'jsonwebtoken';
 import { randomUUID } from 'crypto';
 import { pcm24To16 } from './lib/audio-converter.js';
 import { getWeatherInfo } from './get_weather.js';
-import { putName } from './put_name.js';
 import { createVonageJwt } from './lib/vonage-jwt.js';
 import { transferCall } from './transfer-call.js';
 
@@ -231,6 +230,89 @@ fastify.register(async (fastify) => {
     let responseStartTimestamp = null;  // 応答開始時のタイムスタンプ
     let latestAudioTimestamp = 0;       // 最新の音声タイムスタンプ
 
+    // 予約状況を管理するステート
+    let reservationState = {
+      name: "未設定",
+      date: "未設定",
+      nights: "未設定",
+      guests: "未設定",
+      breakfast: "未設定",
+      parking: "未設定",
+      roomType: "未設定",
+      phone: "未設定",
+      isGreetingDone: false,
+      isConfirmed: false
+    };
+
+    // トークン使用量の集計用
+    let sessionTokenUsage = {
+      total: 0,
+      input: 0,
+      output: 0
+    };
+
+    // instructionを動的に生成する関数
+    const getInstructions = () => {
+      const baseMessage = loadSystemMessage();
+
+      const now = new Date();
+      const jstDate = now.toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
+
+
+      let greetingInstruction = "";
+      if (!reservationState.isGreetingDone) {
+        greetingInstruction = `
+必ず会話の冒頭で、「お電話ありがとうございます。ホテルエスペランザです。本日はどのようなご要件でしょうか？」と丁寧な日本語で挨拶してください。
+`;
+      } else {
+        greetingInstruction = `
+**挨拶は完了しています。** 「お電話ありがとうございます...」などの定型挨拶は二度と繰り返さないでください。
+すぐにユーザーの要件（予約情報の聞き取り）を進めてください。
+`;
+      }
+
+      let confirmationInstruction = "";
+      if (reservationState.isConfirmed) {
+        confirmationInstruction = `
+**予約は確定済みです。** 予約内容の確認はもうしないでください。
+「予約を確定しました」とだけ伝え、詳細の復唱は絶対にしないでください。
+その上で、「他にご質問はありますか？」と聞き、なければ「お電話ありがとうございました。」と丁寧な日本語で挨拶してから、\`terminate_call\` を使って切断してください。
+`;
+      } else {
+        confirmationInstruction = `
+まだ予約は確定していません。すべての項目が埋まったら、内容を復唱し、ユーザーの同意を得てください。
+同意が得られたら、必ず \`confirm_reservation\` ツールを呼び出してください。
+`;
+      }
+
+      const statusText = `
+---
+現在の日時は ${jstDate} です。日付の計算は必ずこの日時を基準に行ってください。
+ユーザーが「明日」や「来週の金曜日」などの相対的な日付で答えた場合は、この現在日時を基準に具体的な日付(YYYY-MM-DD)を計算し、\`update_reservation\` ツールで date を更新してください。
+ユーザーに日付を聞き返す必要はありません。
+
+現在の予約状況:
+- お客様のお名前: ${reservationState.name}
+- 宿泊希望日: ${reservationState.date}
+- 宿泊日数: ${reservationState.nights}
+- 宿泊人数: ${reservationState.guests}
+- 朝食の有無: ${reservationState.breakfast}
+- 駐車場の有無: ${reservationState.parking}
+- お部屋の希望: ${reservationState.roomType}
+- 連絡先電話番号: ${reservationState.phone}
+- 予約確定状態: ${reservationState.isConfirmed ? "確定済み" : "未確定"}
+
+※「未設定」の項目がある場合、それを優先的にユーザーに質問してください。
+`;
+      return baseMessage + greetingInstruction + confirmationInstruction + statusText + `
+
+電話番号情報:
+- 発信者番号（自分の電話番号）: ${caller}
+- 着信番号（かけた先の番号）: ${called}
+電話番号を聞かれた場合、先頭が81から始まる番号であれば、それを0に置き換えて、日本のローカル番号として回答してください。
+`;
+    };
+
     // OpenAI Realtime API の WebSocket に接続
     const openAiWs = new WebSocket(`wss://api.openai.com/v1/realtime?model=${OPENAI_MODEL}`, {
       headers: {
@@ -251,13 +333,7 @@ fastify.register(async (fastify) => {
           output_audio_format: 'pcm16',
           voice: 'alloy',
           voice: 'alloy',
-          instructions: `${SYSTEM_MESSAGE}
-          
-電話番号情報:
-- 発信者番号（自分の電話番号）: ${caller}
-- 着信番号（かけた先の番号）: ${called}
-電話番号を聞かれた場合、先頭が81から始まる番号であれば、それを0に置き換えて、日本のローカル番号として回答してください。
-`,
+          instructions: getInstructions(),
           modalities: ["text", "audio"],
           temperature: 0.8,
           tools: [
@@ -278,18 +354,34 @@ fastify.register(async (fastify) => {
             },
             {
               type: "function",
-              name: "put_name",
-              description: "取得したユーザー名を記録します",
+              name: "update_reservation",
+              description: "予約情報を更新します。ユーザーから聞き取れた項目だけを指定してください。",
               parameters: {
                 type: "object",
                 properties: {
-                  name: {
-                    type: "string",
-                    description: "ユーザーの名前"
-                  }
+                  name: { type: "string", description: "お客様のお名前" },
+                  date: { type: "string", description: "宿泊希望日 (必ず YYYY-MM-DD 形式で設定すること。例: 2024-12-25)" },
+                  nights: { type: "string", description: "宿泊日数" },
+                  guests: { type: "string", description: "宿泊人数" },
+                  breakfast: { type: "string", description: "朝食の有無" },
+                  parking: { type: "string", description: "駐車場の有無" },
+                  roomType: { type: "string", description: "お部屋の希望" },
+                  phone: { type: "string", description: "連絡先電話番号" }
                 },
-                required: ["name"]
+                required: []
               }
+            },
+            {
+              type: "function",
+              name: "confirm_reservation",
+              description: "ユーザーが予約内容に同意し、予約を確定する場合に呼び出します。詳細の復唱はせず、確定した旨のみを伝えてください。",
+              parameters: { type: "object", properties: {}, required: [] }
+            },
+            {
+              type: "function",
+              name: "terminate_call",
+              description: "通話を終了します。すべての手続きが完了し、ユーザーに質問がないか確認した後に実行してください。",
+              parameters: { type: "object", properties: {}, required: [] }
             },
             {
               type: "function",
@@ -487,21 +579,66 @@ fastify.register(async (fastify) => {
               console.log(`🐞 function call completed: ${weatherInfo}`);
               openAiWs.send(JSON.stringify(item));
               openAiWs.send(JSON.stringify({ type: 'response.create' }));
-            } else if (response.name === 'put_name') {
-              const { name } = args;
-              await putName(name);
+            } else if (response.name === 'update_reservation') {
+              const { name, date, nights, guests, breakfast, parking, roomType, phone } = args;
+
+              // ステートを更新（渡された値のみ更新）
+              if (name) reservationState.name = name;
+              if (date) reservationState.date = date;
+              if (nights) reservationState.nights = nights;
+              if (guests) reservationState.guests = guests;
+              if (breakfast) reservationState.breakfast = breakfast;
+              if (parking) reservationState.parking = parking;
+              if (roomType) reservationState.roomType = roomType;
+              if (phone) reservationState.phone = phone;
+
+              console.log('📝 予約状況を更新:', reservationState);
+
+              // 新しいステートでセッションを更新
+              sendSessionUpdate();
 
               const item = {
                 type: 'conversation.item.create',
                 item: {
                   type: 'function_call_output',
                   call_id: response.call_id,
-                  output: JSON.stringify({ status: 'ok' })
+                  output: JSON.stringify({ status: 'updated', currentState: reservationState })
                 }
               };
 
               openAiWs.send(JSON.stringify(item));
               openAiWs.send(JSON.stringify({ type: 'response.create' }));
+            } else if (response.name === 'confirm_reservation') {
+              console.log('📝 Reservation confirmed by user.');
+              reservationState.isConfirmed = true;
+              sendSessionUpdate(); // ステート更新通知
+
+              const item = {
+                type: 'conversation.item.create',
+                item: {
+                  type: 'function_call_output',
+                  call_id: response.call_id,
+                  output: JSON.stringify({ status: 'confirmed' })
+                }
+              };
+              openAiWs.send(JSON.stringify(item));
+              openAiWs.send(JSON.stringify({ type: 'response.create' }));
+            } else if (response.name === 'terminate_call') {
+              console.log('📞 Terminating call requested by AI');
+              const item = {
+                type: 'conversation.item.create',
+                item: {
+                  type: 'function_call_output',
+                  call_id: response.call_id,
+                  output: JSON.stringify({ status: 'terminating' })
+                }
+              };
+              openAiWs.send(JSON.stringify(item));
+
+              // AIが「さようなら」などを言い終わる時間を稼ぐため少し待ってから切断
+              setTimeout(() => {
+                connection.close();
+              }, 3000);
             } else if (response.name === 'transfer_call') {
               const { destination } = args;
               const transferTo = destination || VONAGE_TRANSPORT_NUMBER;
@@ -573,10 +710,20 @@ fastify.register(async (fastify) => {
       }
     });
 
-    // クライアント接続が切れたら OpenAI も切断
+    // WebSocket切断時の処理
     connection.on('close', () => {
       console.log('クライアントが切断されました。');
-      if (openAiWs.readyState === WebSocket.OPEN) openAiWs.close();
+      console.log('📊 通話終了 - OpenAI トークン使用量:');
+      console.log(`  合計: ${sessionTokenUsage.total}`);
+      console.log(`  入力: ${sessionTokenUsage.input}`);
+      console.log(`  出力: ${sessionTokenUsage.output}`);
+
+      const inputCost = (sessionTokenUsage.input / 1000000) * 32;
+      const outputCost = (sessionTokenUsage.output / 1000000) * 64;
+      const totalCost = inputCost + outputCost;
+      console.log(`💰 推定コスト: $${totalCost.toFixed(4)}`);
+
+      openAiWs.close();
     });
 
     // OpenAI 側から切断された場合のクリーンアップ
@@ -590,6 +737,32 @@ fastify.register(async (fastify) => {
     openAiWs.on('error', (error) => {
       console.error('👺 OpenAI WebSocketエラー:', error);
     });
+
+    // OpenAIの応答完了イベントを監視して挨拶フラグを更新
+    openAiWs.on('message', (data) => {
+      try {
+        const response = JSON.parse(data);
+        if (response.type === 'response.done') {
+          // 挨拶フラグの更新
+          if (!reservationState.isGreetingDone) {
+            reservationState.isGreetingDone = true;
+            console.log('✅ 挨拶が完了しました。ステートを更新して挨拶を禁止します。');
+            sendSessionUpdate();
+          }
+
+          // トークン使用量の集計
+          const usage = response.response.usage;
+          if (usage) {
+            sessionTokenUsage.total += usage.total_tokens || 0;
+            sessionTokenUsage.input += usage.input_tokens || 0;
+            sessionTokenUsage.output += usage.output_tokens || 0;
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
+    });
+
   });
 });
 
