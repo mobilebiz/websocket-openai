@@ -523,7 +523,7 @@ fastify.register(async (fastify) => {
               console.log(`📞 Transferring call to ${transferTo} (UUID: ${uuid})`);
 
               try {
-                await transferCall(uuid, transferTo, called);
+                await transferCall(uuid, transferTo, VONAGE_OUTBOUND_FROM);
                 console.log('転送成功');
                 const item = {
                   type: 'conversation.item.create',
