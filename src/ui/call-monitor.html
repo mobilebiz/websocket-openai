@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>受付モニター</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #ffffff; --bg2: #f8fafc; --bg3: #f1f5f9;
+    --text: #0f172a; --text2: #475569; --text3: #94a3b8;
+    --accent: #2563eb; --success: #16a34a; --warning: #d97706; --danger: #dc2626;
+    --border: #e2e8f0; --radius: 10px;
+    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', sans-serif;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f172a; --bg2: #1e293b; --bg3: #334155;
+      --text: #f1f5f9; --text2: #94a3b8; --text3: #64748b;
+      --border: #334155;
+    }
+  }
+
+  body {
+    font-family: var(--font); background: var(--bg); color: var(--text);
+    padding: 16px; line-height: 1.5; font-size: 14px;
+  }
+
+  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .header h1 { font-size: 18px; font-weight: 700; }
+  .header .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--bg2); border: 1px solid var(--border); border-radius: 20px;
+    padding: 4px 12px; font-size: 12px; color: var(--text2);
+  }
+  .header .badge .dot {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--success);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  .stats {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px;
+  }
+  .stat-card {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 12px; text-align: center;
+  }
+  .stat-card .value { font-size: 28px; font-weight: 700; }
+  .stat-card .label { font-size: 11px; color: var(--text2); margin-top: 2px; }
+  .stat-card.active .value { color: var(--success); }
+  .stat-card.total .value { color: var(--accent); }
+  .stat-card.transferred .value { color: var(--warning); }
+
+  .call-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .call-card {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 14px; transition: box-shadow 0.2s;
+  }
+  .call-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  .call-card.active { border-left: 3px solid var(--success); }
+  .call-card.completed { border-left: 3px solid var(--text3); opacity: 0.7; }
+  .call-card.transferred { border-left: 3px solid var(--warning); }
+
+  .call-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .caller-info { display: flex; align-items: center; gap: 8px; }
+  .caller-icon { font-size: 20px; }
+  .caller-number { font-weight: 600; font-size: 15px; }
+  .caller-name { font-size: 12px; color: var(--accent); }
+
+  .status-badge {
+    font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 600;
+  }
+  .status-badge.active { background: #dcfce7; color: #166534; }
+  .status-badge.completed { background: var(--bg3); color: var(--text3); }
+  .status-badge.transferred { background: #fef3c7; color: #92400e; }
+
+  @media (prefers-color-scheme: dark) {
+    .status-badge.active { background: #14532d; color: #86efac; }
+    .status-badge.completed { background: var(--bg3); color: var(--text3); }
+    .status-badge.transferred { background: #78350f; color: #fde68a; }
+  }
+
+  .call-meta { display: flex; gap: 16px; font-size: 12px; color: var(--text2); margin-bottom: 8px; }
+
+  .transcripts {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+    padding: 8px; max-height: 150px; overflow-y: auto; font-size: 12px;
+  }
+  .transcript-line { padding: 3px 0; }
+  .transcript-line .role { font-weight: 600; margin-right: 4px; }
+  .transcript-line .role.user { color: var(--accent); }
+  .transcript-line .role.assistant { color: var(--success); }
+
+  .call-actions { margin-top: 8px; display: flex; gap: 8px; }
+  .btn {
+    padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 600;
+    border: 1px solid var(--border); background: var(--bg); color: var(--text);
+    cursor: pointer; transition: all 0.15s;
+  }
+  .btn:hover { background: var(--bg3); }
+  .btn.primary { background: var(--accent); color: white; border-color: var(--accent); }
+  .btn.primary:hover { opacity: 0.9; }
+  .btn.danger { background: var(--danger); color: white; border-color: var(--danger); }
+
+  .empty {
+    text-align: center; padding: 40px 20px; color: var(--text3);
+  }
+  .empty .icon { font-size: 40px; margin-bottom: 8px; }
+
+  .refresh-bar { display: flex; justify-content: flex-end; margin-bottom: 12px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>受付モニター</h1>
+  <span class="badge"><span class="dot"></span>AI受付稼働中</span>
+</div>
+
+<div class="stats">
+  <div class="stat-card active"><div class="value" id="stat-active">-</div><div class="label">アクティブ</div></div>
+  <div class="stat-card total"><div class="value" id="stat-total">-</div><div class="label">本日の合計</div></div>
+  <div class="stat-card transferred"><div class="value" id="stat-transferred">-</div><div class="label">転送済み</div></div>
+</div>
+
+<div class="refresh-bar">
+  <button class="btn" id="btn-refresh" disabled>更新</button>
+</div>
+
+<div class="call-list" id="call-list">
+  <div class="empty">
+    <div class="icon">📞</div>
+    <div>通話データを読み込んでいます...</div>
+  </div>
+</div>
+
+<script>
+// ── MCP Apps 最小プロトコルクライアント ──────────────────
+class McpApp {
+  constructor(name, version) {
+    this.name = name;
+    this.version = version;
+    this._id = 0;
+    this._pending = new Map();
+    this._handlers = {};
+    window.addEventListener('message', (e) => this._onMessage(e));
+  }
+
+  async connect() {
+    const result = await this._send('ui/initialize', {
+      protocolVersion: '2026-01-26',
+      clientInfo: { name: this.name, version: this.version },
+      capabilities: {}
+    });
+    this._notify('ui/notifications/initialized', {});
+    return result;
+  }
+
+  on(event, fn) { this._handlers[event] = fn; }
+
+  async callTool(name, args = {}) {
+    return this._send('tools/call', { name, arguments: args });
+  }
+
+  _send(method, params) {
+    return new Promise((resolve, reject) => {
+      const id = ++this._id;
+      this._pending.set(id, { resolve, reject });
+      window.parent.postMessage({ jsonrpc: '2.0', id, method, params }, '*');
+    });
+  }
+
+  _notify(method, params) {
+    window.parent.postMessage({ jsonrpc: '2.0', method, params }, '*');
+  }
+
+  _onMessage(event) {
+    const msg = event.data;
+    if (!msg || msg.jsonrpc !== '2.0') return;
+    if ('id' in msg && this._pending.has(msg.id)) {
+      const { resolve, reject } = this._pending.get(msg.id);
+      this._pending.delete(msg.id);
+      msg.error ? reject(new Error(msg.error.message)) : resolve(msg.result);
+    } else if (msg.method) {
+      const h = this._handlers[msg.method];
+      if (h) h(msg.params);
+    }
+  }
+}
+
+// ── UIロジック ───────────────────────────────────────
+const app = new McpApp('vonage-reception-monitor', '1.0.0');
+let currentCalls = [];
+
+function formatPhone(num) {
+  if (!num || num === 'unknown') return '不明';
+  // 81XXXXXXXXXX → 0X-XXXX-XXXX 形式に変換
+  if (num.startsWith('81')) num = '0' + num.slice(2);
+  if (num.startsWith('+81')) num = '0' + num.slice(3);
+  return num;
+}
+
+function duration(start, end) {
+  const ms = (end ? new Date(end) : new Date()) - new Date(start);
+  const s = Math.floor(ms / 1000);
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return `${m}:${String(sec).padStart(2, '0')}`;
+}
+
+function renderCalls(calls) {
+  currentCalls = calls;
+  const active = calls.filter(c => c.status === 'active').length;
+  const transferred = calls.filter(c => c.status === 'transferred').length;
+
+  document.getElementById('stat-active').textContent = active;
+  document.getElementById('stat-total').textContent = calls.length;
+  document.getElementById('stat-transferred').textContent = transferred;
+
+  const list = document.getElementById('call-list');
+  if (!calls.length) {
+    list.innerHTML = '<div class="empty"><div class="icon">📞</div><div>通話履歴がありません</div></div>';
+    return;
+  }
+
+  list.innerHTML = calls.map(call => `
+    <div class="call-card ${call.status}">
+      <div class="call-header">
+        <div class="caller-info">
+          <span class="caller-icon">${call.status === 'active' ? '🟢' : call.status === 'transferred' ? '🔀' : '⚪'}</span>
+          <div>
+            <div class="caller-number">${formatPhone(call.caller)}</div>
+            ${call.userName ? `<div class="caller-name">${call.userName} 様</div>` : ''}
+          </div>
+        </div>
+        <span class="status-badge ${call.status}">${
+          call.status === 'active' ? '通話中' :
+          call.status === 'transferred' ? '転送済み' : '終了'
+        }</span>
+      </div>
+      <div class="call-meta">
+        <span>着信: ${new Date(call.startTime).toLocaleTimeString('ja-JP')}</span>
+        <span>通話時間: ${duration(call.startTime, call.endTime)}</span>
+        ${call.transferredTo ? `<span>転送先: ${formatPhone(call.transferredTo)}</span>` : ''}
+      </div>
+      ${call.transcripts?.length ? `
+        <div class="transcripts">
+          ${call.transcripts.map(t => `
+            <div class="transcript-line">
+              <span class="role ${t.role}">${t.role === 'user' ? '発信者' : 'AI'}:</span>
+              <span>${t.text}</span>
+            </div>
+          `).join('')}
+        </div>
+      ` : ''}
+      ${call.status === 'active' ? `
+        <div class="call-actions">
+          <button class="btn primary" onclick="handleTransfer('${call.uuid}')">🔀 オペレーターに転送</button>
+        </div>
+      ` : ''}
+    </div>
+  `).join('');
+}
+
+async function handleTransfer(uuid) {
+  try {
+    await app.callTool('transfer-call', { uuid });
+  } catch (err) {
+    console.error('Transfer error:', err);
+  }
+}
+
+async function handleRefresh() {
+  try {
+    const result = await app.callTool('refresh-calls', {});
+    const data = result?.structuredContent || result?.content?.[0]?.text;
+    if (data?.calls) renderCalls(data.calls);
+    else if (typeof data === 'string') renderCalls(JSON.parse(data));
+  } catch (err) {
+    console.error('Refresh error:', err);
+  }
+}
+
+// ── 初期化 ────────────────────────────────────────
+(async () => {
+  try {
+    await app.connect();
+
+    app.on('ui/notifications/tool-input', (params) => {
+      // ツール引数は受付モニターでは不要
+    });
+
+    app.on('ui/notifications/tool-result', (params) => {
+      const sc = params?.result?.structuredContent;
+      if (sc?.calls) renderCalls(sc.calls);
+    });
+
+    document.getElementById('btn-refresh').disabled = false;
+    document.getElementById('btn-refresh').addEventListener('click', handleRefresh);
+
+    // 自動更新: 10秒ごと
+    setInterval(handleRefresh, 10000);
+  } catch (err) {
+    document.getElementById('call-list').innerHTML =
+      `<div class="empty"><div class="icon">⚠️</div><div>接続エラー: ${err.message}</div></div>`;
+  }
+})();
+</script>
+</body>
+</html>

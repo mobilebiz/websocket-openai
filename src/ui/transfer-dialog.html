@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>通話転送</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #ffffff; --bg2: #f8fafc; --bg3: #f1f5f9;
+    --text: #0f172a; --text2: #475569; --text3: #94a3b8;
+    --accent: #2563eb; --success: #16a34a; --warning: #d97706; --danger: #dc2626;
+    --border: #e2e8f0; --radius: 10px;
+    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', sans-serif;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f172a; --bg2: #1e293b; --bg3: #334155;
+      --text: #f1f5f9; --text2: #94a3b8; --text3: #64748b;
+      --border: #334155;
+    }
+  }
+
+  body {
+    font-family: var(--font); background: var(--bg); color: var(--text);
+    padding: 16px; line-height: 1.5; font-size: 14px;
+  }
+
+  .header { margin-bottom: 16px; }
+  .header h1 { font-size: 18px; font-weight: 700; }
+  .header p { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+  .dialog {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--radius); overflow: hidden;
+  }
+
+  .dialog-section {
+    padding: 16px; border-bottom: 1px solid var(--border);
+  }
+  .dialog-section:last-child { border-bottom: none; }
+
+  .section-title {
+    font-size: 11px; font-weight: 700; color: var(--text3);
+    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;
+  }
+
+  .info-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  }
+  .info-item .label { font-size: 11px; color: var(--text3); }
+  .info-item .value { font-size: 14px; font-weight: 600; }
+
+  .status-indicator {
+    display: inline-flex; align-items: center; gap: 6px; font-size: 13px;
+  }
+  .status-indicator .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+  }
+  .status-indicator .dot.active { background: var(--success); animation: pulse 2s infinite; }
+  .status-indicator .dot.pending { background: var(--warning); animation: pulse 1s infinite; }
+  .status-indicator .dot.done { background: var(--accent); }
+  .status-indicator .dot.error { background: var(--danger); }
+
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  .form-group { margin-bottom: 12px; }
+  .form-group label {
+    display: block; font-size: 12px; font-weight: 600;
+    color: var(--text2); margin-bottom: 6px;
+  }
+  .form-group input {
+    width: 100%; padding: 10px 12px; border: 1px solid var(--border);
+    border-radius: 8px; font-size: 14px; font-family: var(--font);
+    background: var(--bg); color: var(--text);
+  }
+  .form-group input:focus { outline: none; border-color: var(--accent); }
+
+  .warning-box {
+    background: #fef3c7; border: 1px solid #fde68a; border-radius: 8px;
+    padding: 10px 12px; font-size: 12px; color: #92400e;
+    display: flex; align-items: flex-start; gap: 8px;
+  }
+  @media (prefers-color-scheme: dark) {
+    .warning-box { background: #78350f; border-color: #92400e; color: #fde68a; }
+  }
+
+  .actions {
+    display: flex; gap: 10px; padding: 16px;
+  }
+  .btn {
+    flex: 1; padding: 10px; border-radius: 8px; font-size: 14px;
+    font-weight: 600; cursor: pointer; border: 1px solid var(--border);
+    transition: all 0.15s; font-family: var(--font);
+  }
+  .btn-cancel {
+    background: var(--bg); color: var(--text);
+  }
+  .btn-cancel:hover { background: var(--bg3); }
+  .btn-transfer {
+    background: var(--warning); color: white; border-color: var(--warning);
+  }
+  .btn-transfer:hover { opacity: 0.9; }
+  .btn-transfer:disabled { background: var(--text3); border-color: var(--text3); cursor: not-allowed; }
+
+  .result-banner {
+    padding: 12px 16px; font-weight: 600; font-size: 13px;
+    display: none; align-items: center; gap: 8px;
+  }
+  .result-banner.show { display: flex; }
+  .result-banner.success { background: #dcfce7; color: #166534; }
+  .result-banner.error { background: #fee2e2; color: #991b1b; }
+  @media (prefers-color-scheme: dark) {
+    .result-banner.success { background: #14532d; color: #86efac; }
+    .result-banner.error { background: #7f1d1d; color: #fca5a5; }
+  }
+
+  .transcripts {
+    max-height: 120px; overflow-y: auto; font-size: 12px;
+    background: var(--bg); border-radius: 6px; padding: 8px;
+    border: 1px solid var(--border);
+  }
+  .transcript-line { padding: 2px 0; }
+  .transcript-line .role { font-weight: 600; }
+  .transcript-line .role.user { color: var(--accent); }
+  .transcript-line .role.assistant { color: var(--success); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🔀 通話転送</h1>
+  <p>AIが対応中の通話をオペレーターに転送します</p>
+</div>
+
+<div class="result-banner" id="result-banner"></div>
+
+<div class="dialog">
+  <div class="dialog-section">
+    <div class="section-title">通話情報</div>
+    <div class="info-grid">
+      <div class="info-item">
+        <div class="label">発信者</div>
+        <div class="value" id="info-caller">-</div>
+      </div>
+      <div class="info-item">
+        <div class="label">ステータス</div>
+        <div class="value">
+          <span class="status-indicator">
+            <span class="dot active" id="status-dot"></span>
+            <span id="status-text">確認中</span>
+          </span>
+        </div>
+      </div>
+      <div class="info-item">
+        <div class="label">通話UUID</div>
+        <div class="value" id="info-uuid" style="font-size:11px; word-break:break-all;">-</div>
+      </div>
+      <div class="info-item">
+        <div class="label">通話開始</div>
+        <div class="value" id="info-start">-</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dialog-section" id="transcript-section" style="display:none;">
+    <div class="section-title">会話内容</div>
+    <div class="transcripts" id="transcripts"></div>
+  </div>
+
+  <div class="dialog-section">
+    <div class="section-title">転送先</div>
+    <div class="form-group">
+      <label>電話番号 (E.164形式)</label>
+      <input type="tel" id="dest-input" placeholder="+819012345678" />
+    </div>
+    <div class="warning-box">
+      <span>⚠️</span>
+      <span>転送を実行すると、AIとの通話は終了し、発信者は転送先に接続されます。</span>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-cancel" id="btn-cancel">キャンセル</button>
+    <button class="btn btn-transfer" id="btn-transfer" disabled>転送を実行</button>
+  </div>
+</div>
+
+<script>
+// ── MCP Apps 最小プロトコルクライアント ──
+class McpApp {
+  constructor(name, version) {
+    this.name = name; this.version = version; this._id = 0;
+    this._pending = new Map(); this._handlers = {};
+    window.addEventListener('message', (e) => this._onMessage(e));
+  }
+  async connect() {
+    const r = await this._send('ui/initialize', {
+      protocolVersion: '2026-01-26',
+      clientInfo: { name: this.name, version: this.version },
+      capabilities: {}
+    });
+    this._notify('ui/notifications/initialized', {});
+    return r;
+  }
+  on(event, fn) { this._handlers[event] = fn; }
+  async callTool(name, args = {}) {
+    return this._send('tools/call', { name, arguments: args });
+  }
+  _send(method, params) {
+    return new Promise((resolve, reject) => {
+      const id = ++this._id;
+      this._pending.set(id, { resolve, reject });
+      window.parent.postMessage({ jsonrpc: '2.0', id, method, params }, '*');
+    });
+  }
+  _notify(method, params) {
+    window.parent.postMessage({ jsonrpc: '2.0', method, params }, '*');
+  }
+  _onMessage(event) {
+    const msg = event.data;
+    if (!msg || msg.jsonrpc !== '2.0') return;
+    if ('id' in msg && this._pending.has(msg.id)) {
+      const { resolve, reject } = this._pending.get(msg.id);
+      this._pending.delete(msg.id);
+      msg.error ? reject(new Error(msg.error.message)) : resolve(msg.result);
+    } else if (msg.method) {
+      const h = this._handlers[msg.method]; if (h) h(msg.params);
+    }
+  }
+}
+
+// ── UIロジック ──
+const app = new McpApp('vonage-transfer-dialog', '1.0.0');
+let callData = {};
+
+const destInput = document.getElementById('dest-input');
+const btnTransfer = document.getElementById('btn-transfer');
+const btnCancel = document.getElementById('btn-cancel');
+const banner = document.getElementById('result-banner');
+
+function formatPhone(num) {
+  if (!num || num === 'unknown') return '不明';
+  if (num.startsWith('81')) num = '0' + num.slice(2);
+  if (num.startsWith('+81')) num = '0' + num.slice(3);
+  return num;
+}
+
+function populateCallInfo(data) {
+  callData = data;
+  const info = data.callInfo || {};
+
+  document.getElementById('info-caller').textContent = formatPhone(info.caller || data.caller || '-');
+  document.getElementById('info-uuid').textContent = data.uuid || '-';
+  document.getElementById('info-start').textContent =
+    info.startTime ? new Date(info.startTime).toLocaleTimeString('ja-JP') : '-';
+
+  if (data.destination) {
+    destInput.value = data.destination;
+  }
+
+  const dot = document.getElementById('status-dot');
+  const statusText = document.getElementById('status-text');
+  dot.className = 'dot active';
+  statusText.textContent = '通話中';
+
+  // 会話内容を表示
+  if (info.transcripts?.length) {
+    document.getElementById('transcript-section').style.display = 'block';
+    document.getElementById('transcripts').innerHTML = info.transcripts.map(t => `
+      <div class="transcript-line">
+        <span class="role ${t.role}">${t.role === 'user' ? '発信者' : 'AI'}:</span>
+        ${t.text}
+      </div>
+    `).join('');
+  }
+
+  btnTransfer.disabled = !destInput.value.trim();
+}
+
+function showBanner(success, text) {
+  banner.className = `result-banner show ${success ? 'success' : 'error'}`;
+  banner.textContent = text;
+}
+
+destInput.addEventListener('input', () => {
+  btnTransfer.disabled = !destInput.value.trim();
+});
+
+btnTransfer.addEventListener('click', async () => {
+  const uuid = callData.uuid;
+  const destination = destInput.value.trim();
+  if (!uuid || !destination) return;
+
+  btnTransfer.disabled = true;
+  btnTransfer.textContent = '転送中...';
+
+  try {
+    const result = await app.callTool('execute-transfer', { uuid, destination });
+    const sc = result?.structuredContent;
+
+    if (sc?.error) {
+      showBanner(false, `転送失敗: ${sc.error}`);
+    } else {
+      showBanner(true, `転送完了: ${formatPhone(destination)} に転送しました`);
+      const dot = document.getElementById('status-dot');
+      const statusText = document.getElementById('status-text');
+      dot.className = 'dot done';
+      statusText.textContent = '転送済み';
+    }
+  } catch (err) {
+    showBanner(false, `エラー: ${err.message}`);
+  } finally {
+    btnTransfer.textContent = '転送を実行';
+    btnTransfer.disabled = false;
+  }
+});
+
+btnCancel.addEventListener('click', () => {
+  // ホストにメッセージを送信（キャンセルの通知）
+  app._notify('ui/notifications/initialized', {});
+});
+
+// ── 初期化 ──
+(async () => {
+  try {
+    await app.connect();
+
+    app.on('ui/notifications/tool-input', (params) => {
+      const args = params?.arguments;
+      if (args) populateCallInfo(args);
+    });
+
+    app.on('ui/notifications/tool-result', (params) => {
+      const sc = params?.result?.structuredContent;
+      if (sc) populateCallInfo(sc);
+    });
+  } catch (err) {
+    showBanner(false, `接続エラー: ${err.message}`);
+  }
+})();
+</script>
+</body>
+</html>

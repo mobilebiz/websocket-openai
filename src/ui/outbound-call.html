@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>発信パネル</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #ffffff; --bg2: #f8fafc; --bg3: #f1f5f9;
+    --text: #0f172a; --text2: #475569; --text3: #94a3b8;
+    --accent: #2563eb; --success: #16a34a; --danger: #dc2626;
+    --border: #e2e8f0; --radius: 10px;
+    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', sans-serif;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f172a; --bg2: #1e293b; --bg3: #334155;
+      --text: #f1f5f9; --text2: #94a3b8; --text3: #64748b;
+      --border: #334155;
+    }
+  }
+
+  body {
+    font-family: var(--font); background: var(--bg); color: var(--text);
+    padding: 16px; line-height: 1.5; font-size: 14px;
+  }
+
+  .header { margin-bottom: 16px; }
+  .header h1 { font-size: 18px; font-weight: 700; }
+  .header p { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+  .panel {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px;
+  }
+
+  .form-group { margin-bottom: 16px; }
+  .form-group label {
+    display: block; font-size: 12px; font-weight: 600;
+    color: var(--text2); margin-bottom: 6px;
+  }
+  .form-group input {
+    width: 100%; padding: 10px 12px; border: 1px solid var(--border);
+    border-radius: 8px; font-size: 16px; font-family: var(--font);
+    background: var(--bg); color: var(--text); letter-spacing: 1px;
+  }
+  .form-group input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+  .form-group .hint { font-size: 11px; color: var(--text3); margin-top: 4px; }
+
+  .btn-call {
+    width: 100%; padding: 12px; border: none; border-radius: 8px;
+    font-size: 15px; font-weight: 700; cursor: pointer;
+    background: var(--success); color: white;
+    transition: all 0.15s;
+  }
+  .btn-call:hover { opacity: 0.9; }
+  .btn-call:disabled { background: var(--text3); cursor: not-allowed; }
+
+  .result {
+    margin-top: 16px; background: var(--bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 14px; display: none;
+  }
+  .result.show { display: block; }
+  .result.success { border-color: var(--success); }
+  .result.error { border-color: var(--danger); }
+
+  .result-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-weight: 600; }
+  .result-header.success { color: var(--success); }
+  .result-header.error { color: var(--danger); }
+
+  .result-detail { font-size: 12px; color: var(--text2); }
+  .result-detail .row { display: flex; justify-content: space-between; padding: 4px 0; }
+  .result-detail .label { color: var(--text3); }
+
+  .dialpad {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+    margin-bottom: 16px;
+  }
+  .dialpad button {
+    padding: 12px; border: 1px solid var(--border); border-radius: 8px;
+    background: var(--bg); color: var(--text); font-size: 18px;
+    cursor: pointer; transition: all 0.1s; font-family: var(--font);
+  }
+  .dialpad button:hover { background: var(--bg3); }
+  .dialpad button:active { transform: scale(0.95); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📞 発信パネル</h1>
+  <p>Vonage Voice API で電話を発信します</p>
+</div>
+
+<div class="panel">
+  <div class="form-group">
+    <label>発信先電話番号</label>
+    <input type="tel" id="phone-input" placeholder="+819012345678" />
+    <div class="hint">E.164形式で入力してください（例: +819012345678）</div>
+  </div>
+
+  <div class="dialpad">
+    <button onclick="dialPress('1')">1</button>
+    <button onclick="dialPress('2')">2</button>
+    <button onclick="dialPress('3')">3</button>
+    <button onclick="dialPress('4')">4</button>
+    <button onclick="dialPress('5')">5</button>
+    <button onclick="dialPress('6')">6</button>
+    <button onclick="dialPress('7')">7</button>
+    <button onclick="dialPress('8')">8</button>
+    <button onclick="dialPress('9')">9</button>
+    <button onclick="dialPress('+')">+</button>
+    <button onclick="dialPress('0')">0</button>
+    <button onclick="dialDelete()">⌫</button>
+  </div>
+
+  <button class="btn-call" id="btn-call" disabled>発信</button>
+</div>
+
+<div class="result" id="result">
+  <div class="result-header" id="result-header"></div>
+  <div class="result-detail" id="result-detail"></div>
+</div>
+
+<script>
+// ── MCP Apps 最小プロトコルクライアント ──
+class McpApp {
+  constructor(name, version) {
+    this.name = name; this.version = version; this._id = 0;
+    this._pending = new Map(); this._handlers = {};
+    window.addEventListener('message', (e) => this._onMessage(e));
+  }
+  async connect() {
+    const r = await this._send('ui/initialize', {
+      protocolVersion: '2026-01-26',
+      clientInfo: { name: this.name, version: this.version },
+      capabilities: {}
+    });
+    this._notify('ui/notifications/initialized', {});
+    return r;
+  }
+  on(event, fn) { this._handlers[event] = fn; }
+  async callTool(name, args = {}) {
+    return this._send('tools/call', { name, arguments: args });
+  }
+  _send(method, params) {
+    return new Promise((resolve, reject) => {
+      const id = ++this._id;
+      this._pending.set(id, { resolve, reject });
+      window.parent.postMessage({ jsonrpc: '2.0', id, method, params }, '*');
+    });
+  }
+  _notify(method, params) {
+    window.parent.postMessage({ jsonrpc: '2.0', method, params }, '*');
+  }
+  _onMessage(event) {
+    const msg = event.data;
+    if (!msg || msg.jsonrpc !== '2.0') return;
+    if ('id' in msg && this._pending.has(msg.id)) {
+      const { resolve, reject } = this._pending.get(msg.id);
+      this._pending.delete(msg.id);
+      msg.error ? reject(new Error(msg.error.message)) : resolve(msg.result);
+    } else if (msg.method) {
+      const h = this._handlers[msg.method]; if (h) h(msg.params);
+    }
+  }
+}
+
+// ── UIロジック ──
+const app = new McpApp('vonage-outbound-call', '1.0.0');
+const phoneInput = document.getElementById('phone-input');
+const btnCall = document.getElementById('btn-call');
+const resultEl = document.getElementById('result');
+const resultHeader = document.getElementById('result-header');
+const resultDetail = document.getElementById('result-detail');
+
+function dialPress(ch) {
+  phoneInput.value += ch;
+  phoneInput.dispatchEvent(new Event('input'));
+}
+
+function dialDelete() {
+  phoneInput.value = phoneInput.value.slice(0, -1);
+  phoneInput.dispatchEvent(new Event('input'));
+}
+
+phoneInput.addEventListener('input', () => {
+  btnCall.disabled = !phoneInput.value.trim();
+});
+
+function showResult(success, headerText, details) {
+  resultEl.className = `result show ${success ? 'success' : 'error'}`;
+  resultHeader.className = `result-header ${success ? 'success' : 'error'}`;
+  resultHeader.textContent = headerText;
+  resultDetail.innerHTML = details;
+}
+
+btnCall.addEventListener('click', async () => {
+  const to = phoneInput.value.trim();
+  if (!to) return;
+
+  btnCall.disabled = true;
+  btnCall.textContent = '発信中...';
+
+  try {
+    const result = await app.callTool('make-call', { to });
+    const sc = result?.structuredContent;
+
+    if (sc?.error) {
+      showResult(false, '発信失敗', `<div class="row"><span>${sc.error}</span></div>`);
+    } else {
+      showResult(true, '発信開始', `
+        <div class="row"><span class="label">UUID</span><span>${sc?.uuid || '-'}</span></div>
+        <div class="row"><span class="label">発信先</span><span>${to}</span></div>
+        <div class="row"><span class="label">ステータス</span><span>${sc?.status || 'initiated'}</span></div>
+      `);
+    }
+  } catch (err) {
+    showResult(false, 'エラー', `<div class="row"><span>${err.message}</span></div>`);
+  } finally {
+    btnCall.disabled = false;
+    btnCall.textContent = '発信';
+  }
+});
+
+// ── 初期化 ──
+(async () => {
+  try {
+    await app.connect();
+
+    // ツール結果でUIを更新
+    app.on('ui/notifications/tool-input', (params) => {
+      const args = params?.arguments;
+      if (args?.to) {
+        phoneInput.value = args.to;
+        btnCall.disabled = false;
+      }
+    });
+
+    app.on('ui/notifications/tool-result', (params) => {
+      const sc = params?.result?.structuredContent;
+      if (sc?.error) {
+        showResult(false, '発信失敗', `<div class="row"><span>${sc.error}</span></div>`);
+      } else if (sc?.uuid || sc?.status === 'initiated') {
+        showResult(true, '発信開始', `
+          <div class="row"><span class="label">UUID</span><span>${sc.uuid || '-'}</span></div>
+          <div class="row"><span class="label">発信先</span><span>${sc.to || '-'}</span></div>
+          <div class="row"><span class="label">ステータス</span><span>${sc.status}</span></div>
+        `);
+      }
+    });
+
+    btnCall.disabled = !phoneInput.value.trim();
+  } catch (err) {
+    showResult(false, '接続エラー', `<div class="row"><span>${err.message}</span></div>`);
+  }
+})();
+</script>
+</body>
+</html>

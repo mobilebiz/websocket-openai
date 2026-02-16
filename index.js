@@ -67,6 +67,9 @@ const LOG_EVENT_TYPES = [
 let wsOpenAiOpened = false;
 let isProcessingAudio = true;
 
+// 通話レジストリ: MCP サーバーから通話状態を参照するために使用
+const callRegistry = new Map();
+
 // system-message.txt を優先し、ファイルがない場合はデフォルト文字列を使用
 const SYSTEM_MESSAGE_FILE = new URL('./system-message.txt', import.meta.url);
 const DEFAULT_SYSTEM_MESSAGE = 'あなたの名前はチャッピーです。明るくフレンドリーなAIアシスタントです。ユーザーが興味を持っている話題について会話し、適切な情報を提供します。ジョークや楽しい話題を交えながら、常にポジティブでいてください。なお、会話はすべて日本語で行いますが、ユーザーが言語を指定した場合は、その言語で回答をしてください。また、会話の最初は「こんにちは。チャッピーです。今日はどのようなお話をしましょうか？」と挨拶をしてください。';
@@ -110,6 +113,20 @@ fastify.get('/_/metrics', async (request, reply) => {
 fastify.all('/event', async (request, reply) => {
   console.log(JSON.stringify(request.body, null, 2));
   reply.send('OK');
+});
+
+// MCP サーバー連携用 API: 通話一覧
+fastify.get('/api/calls', async (request, reply) => {
+  const calls = Array.from(callRegistry.values())
+    .sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
+  reply.send(calls);
+});
+
+// MCP サーバー連携用 API: 個別通話詳細
+fastify.get('/api/calls/:uuid', async (request, reply) => {
+  const call = callRegistry.get(request.params.uuid);
+  if (!call) return reply.status(404).send({ error: '通話が見つかりません' });
+  reply.send(call);
 });
 
 // 指定した番号に Vonage Voice API v2 でアウトバウンド発信する
@@ -224,6 +241,17 @@ fastify.register(async (fastify) => {
 
     const { caller, called, uuid } = req.query || {};
     console.log(`Call Context - Caller: ${caller}, Called: ${called}, UUID: ${uuid}`);
+
+    // 通話をレジストリに登録
+    callRegistry.set(uuid, {
+      uuid,
+      caller,
+      called,
+      startTime: new Date().toISOString(),
+      status: 'active',
+      transcripts: [],
+      userName: null,
+    });
 
     // 会話の状態やタイミングを記録する変数
     // let responseId = null;
@@ -459,11 +487,15 @@ fastify.register(async (fastify) => {
         // ユーザーの文字起こし結果をログ
         if (response.type === 'conversation.item.input_audio_transcription.completed' && response.transcript) {
           console.log('🤖 ユーザーの音声の文字起こし: ', response.transcript);
+          const call = callRegistry.get(uuid);
+          if (call) call.transcripts.push({ role: 'user', text: response.transcript, timestamp: new Date().toISOString() });
         }
 
         // アシスタント側のテキスト化済み応答をログ
         if (response.type === 'response.audio_transcript.done' && response.transcript) {
           console.log('🤖 アシスタント回答: ', response.transcript);
+          const call = callRegistry.get(uuid);
+          if (call) call.transcripts.push({ role: 'assistant', text: response.transcript, timestamp: new Date().toISOString() });
         }
 
         // 関数呼び出しの結果を受け取り、実際の関数実行と応答生成
@@ -490,6 +522,8 @@ fastify.register(async (fastify) => {
             } else if (response.name === 'put_name') {
               const { name } = args;
               await putName(name);
+              const callForName = callRegistry.get(uuid);
+              if (callForName) callForName.userName = name;
 
               const item = {
                 type: 'conversation.item.create',
@@ -525,6 +559,11 @@ fastify.register(async (fastify) => {
               try {
                 await transferCall(uuid, transferTo, VONAGE_OUTBOUND_FROM);
                 console.log('転送成功');
+                const callForTransfer = callRegistry.get(uuid);
+                if (callForTransfer) {
+                  callForTransfer.status = 'transferred';
+                  callForTransfer.transferredTo = transferTo;
+                }
                 const item = {
                   type: 'conversation.item.create',
                   item: {
@@ -576,6 +615,11 @@ fastify.register(async (fastify) => {
     // クライアント接続が切れたら OpenAI も切断
     connection.on('close', () => {
       console.log('クライアントが切断されました。');
+      const callOnClose = callRegistry.get(uuid);
+      if (callOnClose && callOnClose.status === 'active') {
+        callOnClose.status = 'completed';
+        callOnClose.endTime = new Date().toISOString();
+      }
       if (openAiWs.readyState === WebSocket.OPEN) openAiWs.close();
     });
 
