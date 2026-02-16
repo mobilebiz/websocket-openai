@@ -1,8 +1,8 @@
 {
   "result": [
     {
-      "scriptId": "316",
-      "url": "file:///Users/katsumi/Documents/workspace/vonage/websocket-openai/lib/audio-converter.js",
+      "scriptId": "318",
+      "url": "file:///home/user/websocket-openai/lib/audio-converter.js",
       "functions": [
         {
           "functionName": "",
@@ -54,6 +54,6 @@
       ]
     }
   ],
-  "timestamp": 284706.232584,
+  "timestamp": 715.726703,
   "source-map-cache": {}
 }

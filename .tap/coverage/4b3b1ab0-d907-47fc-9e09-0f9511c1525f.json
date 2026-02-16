@@ -1,0 +1,331 @@
+{
+  "result": [
+    {
+      "scriptId": "602",
+      "url": "file:///home/user/websocket-openai/index.js",
+      "functions": [
+        {
+          "functionName": "",
+          "ranges": [
+            {
+              "startOffset": 0,
+              "endOffset": 21693,
+              "count": 1
+            },
+            {
+              "startOffset": 946,
+              "endOffset": 960,
+              "count": 0
+            },
+            {
+              "startOffset": 961,
+              "endOffset": 979,
+              "count": 0
+            },
+            {
+              "startOffset": 1068,
+              "endOffset": 1300,
+              "count": 0
+            },
+            {
+              "startOffset": 1301,
+              "endOffset": 1308,
+              "count": 0
+            },
+            {
+              "startOffset": 21485,
+              "endOffset": 21692,
+              "count": 0
+            }
+          ],
+          "isBlockCoverage": true
+        },
+        {
+          "functionName": "loadSystemMessage",
+          "ranges": [
+            {
+              "startOffset": 2466,
+              "endOffset": 2795,
+              "count": 0
+            }
+          ],
+          "isBlockCoverage": false
+        },
+        {
+          "functionName": "buildPublicUrl",
+          "ranges": [
+            {
+              "startOffset": 2865,
+              "endOffset": 3114,
+              "count": 0
+            }
+          ],
+          "isBlockCoverage": false
+        },
+        {
+          "functionName": "",
+          "ranges": [
+            {
+              "startOffset": 3604,
+              "endOffset": 3687,
+              "count": 0
+            }
+          ],
+          "isBlockCoverage": false
+        },
+        {
+          "functionName": "",
+          "ranges": [
+            {
+              "startOffset": 3746,
+              "endOffset": 3795,
+              "count": 0
+            }
+          ],
+          "isBlockCoverage": false
+        },
+        {
+          "functionName": "",
+          "ranges": [
+            {
+              "startOffset": 3862,
+              "endOffset": 3911,
+              "count": 0
+            }
+          ],
+          "isBlockCoverage": false
+        },
+        {
+          "functionName": "",
+          "ranges": [
+            {
+              "startOffset": 3977,
+              "endOffset": 4080,
+              "count": 0
+            }
+          ],
+          "isBlockCoverage": false
+        },
+        {
+          "functionName": "",
+          "ranges": [
+            {
+              "startOffset": 4135,
+              "endOffset": 4303,
+              "count": 0
+            }
+          ],
+          "isBlockCoverage": false
+        },
+        {
+          "functionName": "",
+          "ranges": [
+            {
+              "startOffset": 4366,
+              "endOffset": 4538,
+              "count": 0
+            }
+          ],
+          "isBlockCoverage": false
+        },
+        {
+          "functionName": "",
+          "ranges": [
+            {
+              "startOffset": 4611,
+              "endOffset": 6680,
+              "count": 0
+            }
+          ],
+          "isBlockCoverage": false
+        },
+        {
+          "functionName": "",
+          "ranges": [
+            {
+              "startOffset": 6755,
+              "endOffset": 7661,
+              "count": 0
+            }
+          ],
+          "isBlockCoverage": false
+        },
+        {
+          "functionName": "",
+          "ranges": [
+            {
+              "startOffset": 7740,
+              "endOffset": 21426,
+              "count": 0
+            }
+          ],
+          "isBlockCoverage": false
+        },
+        {
+          "functionName": "",
+          "ranges": [
+            {
+              "startOffset": 21537,
+              "endOffset": 21663,
+              "count": 0
+            }
+          ],
+          "isBlockCoverage": false
+        }
+      ]
+    },
+    {
+      "scriptId": "640",
+      "url": "file:///home/user/websocket-openai/lib/audio-converter.js",
+      "functions": [
+        {
+          "functionName": "",
+          "ranges": [
+            {
+              "startOffset": 0,
+              "endOffset": 1371,
+              "count": 1
+            }
+          ],
+          "isBlockCoverage": true
+        },
+        {
+          "functionName": "pcm24To16",
+          "ranges": [
+            {
+              "startOffset": 231,
+              "endOffset": 1371,
+              "count": 0
+            }
+          ],
+          "isBlockCoverage": false
+        }
+      ]
+    },
+    {
+      "scriptId": "641",
+      "url": "file:///home/user/websocket-openai/get_weather.js",
+      "functions": [
+        {
+          "functionName": "",
+          "ranges": [
+            {
+              "startOffset": 0,
+              "endOffset": 1871,
+              "count": 1
+            }
+          ],
+          "isBlockCoverage": true
+        },
+        {
+          "functionName": "getWeatherInfo",
+          "ranges": [
+            {
+              "startOffset": 309,
+              "endOffset": 1870,
+              "count": 0
+            }
+          ],
+          "isBlockCoverage": false
+        }
+      ]
+    },
+    {
+      "scriptId": "642",
+      "url": "file:///home/user/websocket-openai/put_name.js",
+      "functions": [
+        {
+          "functionName": "",
+          "ranges": [
+            {
+              "startOffset": 0,
+              "endOffset": 286,
+              "count": 1
+            }
+          ],
+          "isBlockCoverage": true
+        },
+        {
+          "functionName": "putName",
+          "ranges": [
+            {
+              "startOffset": 99,
+              "endOffset": 284,
+              "count": 0
+            }
+          ],
+          "isBlockCoverage": false
+        }
+      ]
+    },
+    {
+      "scriptId": "643",
+      "url": "file:///home/user/websocket-openai/lib/vonage-jwt.js",
+      "functions": [
+        {
+          "functionName": "",
+          "ranges": [
+            {
+              "startOffset": 0,
+              "endOffset": 1301,
+              "count": 1
+            }
+          ],
+          "isBlockCoverage": true
+        },
+        {
+          "functionName": "resolveVonagePrivateKey",
+          "ranges": [
+            {
+              "startOffset": 178,
+              "endOffset": 760,
+              "count": 0
+            }
+          ],
+          "isBlockCoverage": false
+        },
+        {
+          "functionName": "createVonageJwt",
+          "ranges": [
+            {
+              "startOffset": 794,
+              "endOffset": 1299,
+              "count": 0
+            }
+          ],
+          "isBlockCoverage": false
+        }
+      ]
+    },
+    {
+      "scriptId": "644",
+      "url": "file:///home/user/websocket-openai/transfer-call.js",
+      "functions": [
+        {
+          "functionName": "",
+          "ranges": [
+            {
+              "startOffset": 0,
+              "endOffset": 1247,
+              "count": 1
+            }
+          ],
+          "isBlockCoverage": true
+        },
+        {
+          "functionName": "transferCall",
+          "ranges": [
+            {
+              "startOffset": 424,
+              "endOffset": 1245,
+              "count": 0
+            }
+          ],
+          "isBlockCoverage": false
+        }
+      ]
+    }
+  ],
+  "timestamp": 717.020953,
+  "source-map-cache": {}
+}
