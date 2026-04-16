@@ -59,13 +59,13 @@ cp .env.example .env
 :--|:--
 SERVER_URL|ngrokで払い出されたURL（`https://`は除く）
 OPENAI_API_KEY|OpeAIのシークレットキー（sk-から始まる文字列）
-OPENAI_API_VERSION|2025-04-01-preview（OpenAI Realtime API の最新バージョン）
+OPENAI_API_VERSION|2025-08-28（OpenAI Realtime API の最新スナップショット）
 OPENAI_MODEL|gpt-realtime（Realtime 対応のモデル）
 VONAGE_PRIVATE_KEY_PATH|Vonage Voice API v2 用の秘密鍵ファイルパス（例: `./private.key`）
 VONAGE_OUTBOUND_FROM|Vonageで取得した発信元電話番号（E.164形式）
 VONAGE_TRANSPORT_NUMBER|転送先のデフォルト電話番号（E.164形式）。`transfer_call` で指定がない場合に利用されます。
 
-上記の設定では、OpenAI Realtime API 側に `OPENAI_API_VERSION=2025-04-01-preview` を送り、`gpt-realtime` モデルと組み合わせることで最新仕様に対応しています。これにより音声入力→応答のリアルタイムループが安定して機能します。
+上記の設定では、OpenAI Realtime API 側に `OPENAI_API_VERSION=2025-08-28` を送り、`gpt-realtime` モデル（2025年8月28日に GA 化された Realtime API のフラッグシップモデル）と組み合わせることで最新仕様に対応しています。これにより音声入力→応答のリアルタイムループが安定して機能します。
 
 追加の調整をしたいときは、ルートにある `system-message.txt` に書かれた文言が最優先で読み込まれます。ファイルが存在しないか空の場合はデフォルトの挨拶文（README の冒頭にあるチャッピーの定義）を使用します。
 
