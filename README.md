@@ -1,8 +1,9 @@
 # Vonage と OpenAI Realtime API の WebSocket 連携
 
-## 概要
+Vonage Voice API の音声ストリームを OpenAI Realtime API (GA / 2025-08-28 スキーマ) に中継し、
+電話越しに音声対話ができるサーバーです。Function Calling による天気検索や通話転送にも対応しています。
 
-ユーザが発声した内容を OpenAI Realtime API が回答を返します。
+## 概要
 
 ```mermaid
 sequenceDiagram
@@ -10,7 +11,7 @@ sequenceDiagram
     participant vonage
     participant OpenAI Realtime API
     participant External Service
-    
+
     user->>vonage: Input
     vonage->>OpenAI Realtime API: WebSocket
     OpenAI Realtime API->>External Service: Function Calling
@@ -19,20 +20,57 @@ sequenceDiagram
     vonage-->>user: Response
 ```
 
+音声は Vonage が 16kHz、OpenAI Realtime API が 24kHz 固定のため、双方向でリサンプリングしています。
+
+## ディレクトリ構成
+
+```text
+index.js                     エントリポイント (設定の読み込みとサーバー起動のみ)
+src/
+  config.js                  環境変数の集約と検証
+  server.js                  Fastify の組み立て・ルート登録
+  routes/
+    health.js                / , /_/health , /_/metrics
+    vonage-webhooks.js       /event , /answer (NCCO の生成)
+    connect.js               /connect (アウトバウンド発信)
+    media-stream.js          /media-stream (WebSocket)
+  realtime/
+    session.js               session.update ペイロードの生成
+    bridge.js                Vonage ⇔ OpenAI の中継本体
+  tools/
+    index.js                 ツールレジストリ
+    get-weather.js           get_weather
+    put-name.js              put_name
+    transfer-call.js         transfer_call
+  vonage/
+    jwt.js                   Voice API 用 JWT の生成
+    calls.js                 発信 / 転送
+  audio/
+    resample.js              リサンプリングとフレーム分割
+scripts/change-url.js        Vonage の Webhook URL を書き換える補助スクリプト
+system-message.txt           システムプロンプト (最優先で読み込まれる)
+```
+
+### ツールを追加するには
+
+`src/tools/` にモジュールを 1 つ足し、`definition` と `handler` を export したうえで
+`src/tools/index.js` の `MODULES` に追加するだけです。OpenAI へ送るツール定義と
+実行時の振り分けの両方に自動で反映されます。
+
+## 必要な環境
+
+- Node.js 22 以上
+- Vonage アカウントと電話番号
+- OpenAI の API キー
+
 ## 設定
 
-### Vonage でアカウントを開設
+### Vonage の準備
 
-[Vonageアカウントの作成](https://zenn.dev/kwcplus/articles/create-vonage-account)
-
-### Vonage で電話番号を取得
-
-[Vonageで電話番号を取得する方法](https://zenn.dev/kwcplus/articles/buynumber-vonage)
-
-### Vonage でアプリケーションを作成
-  
-1. [Vonage Voice API ガイド](https://zenn.dev/kwcplus/articles/vonage-voice-guide)
-1. 公開鍵と秘密鍵を生成し、秘密鍵をprivate.keyという名前に変更してディレクトリの直下に配置。
+1. [Vonageアカウントの作成](https://zenn.dev/kwcplus/articles/create-vonage-account)
+1. [Vonageで電話番号を取得する方法](https://zenn.dev/kwcplus/articles/buynumber-vonage)
+1. [Vonage Voice API ガイド](https://zenn.dev/kwcplus/articles/vonage-voice-guide) に従ってアプリケーションを作成
+1. 公開鍵と秘密鍵を生成し、秘密鍵を `private.key` という名前でディレクトリ直下に配置
 1. 作成したアプリケーションに購入した電話番号をリンク
 
 ### OpenAI の API キー取得
@@ -43,66 +81,81 @@ sequenceDiagram
 
 ```sh
 npm install
-npm run start
-ngrok http 3000
-```
-
-起動した際に払い出される ngrok の URL をコピーする。
-
-```sh
 cp .env.example .env
 ```
 
-`.env`を設定する。
+`.env` を設定します。
 
-キー|値
-:--|:--
-SERVER_URL|ngrokで払い出されたURL（`https://`は除く）
-OPENAI_API_KEY|OpeAIのシークレットキー（sk-から始まる文字列）
-OPENAI_API_VERSION|2025-08-28（OpenAI Realtime API の最新スナップショット）
-OPENAI_MODEL|gpt-realtime（Realtime 対応のモデル）
-VONAGE_PRIVATE_KEY_PATH|Vonage Voice API v2 用の秘密鍵ファイルパス（例: `./private.key`）
-VONAGE_OUTBOUND_FROM|Vonageで取得した発信元電話番号（E.164形式）
-VONAGE_TRANSPORT_NUMBER|転送先のデフォルト電話番号（E.164形式）。`transfer_call` で指定がない場合に利用されます。
+キー | 必須 | 値
+:--|:--|:--
+`SERVER_URL` | ✅ | ngrok / Fly.io で払い出されたホスト名（`https://` は除く）
+`OPENAI_API_KEY` | ✅ | OpenAI のシークレットキー（`sk-` から始まる文字列）
+`OPENAI_MODEL` | ✅ | Realtime 対応モデル。既定は `gpt-realtime`
+`OPENAI_VOICE` | | 音声の種類。既定は `alloy`
+`OPENAI_TRANSCRIPTION_MODEL` | | ユーザー発話の文字起こしモデル。既定は `gpt-4o-transcribe`
+`VONAGE_APPLICATION_ID` | | Vonage アプリケーションの ID
+`VONAGE_PRIVATE_KEY_PATH` | | 秘密鍵ファイルのパス（例: `./private.key`）
+`VONAGE_PRIVATE_KEY` | | 秘密鍵そのもの。本番では Fly secrets 経由でこちらを使う
+`VONAGE_OUTBOUND_FROM` | | 発信元電話番号（E.164形式）
+`VONAGE_TRANSPORT_NUMBER` | | 転送先のデフォルト番号。`transfer_call` で指定がない場合に使用
+`VONAGE_API_KEY` / `VONAGE_API_SECRET` | | `scripts/change-url.js` が Webhook URL を書き換える際に使用
+`CONNECT_API_KEY` | | `/connect` の認証キー。未設定時は `VONAGE_APPLICATION_ID` にフォールバック
+`OPEN_WEATHER_API_KEY` | | `get_weather` で使用する OpenWeatherMap の API キー
+`LOG_LEVEL` | | ログレベル。既定は `info`
 
-上記の設定では、OpenAI Realtime API 側に `OPENAI_API_VERSION=2025-08-28` を送り、`gpt-realtime` モデル（2025年8月28日に GA 化された Realtime API のフラッグシップモデル）と組み合わせることで最新仕様に対応しています。これにより音声入力→応答のリアルタイムループが安定して機能します。
+システムプロンプトはルートの `system-message.txt` が最優先で読み込まれます。
+ファイルが存在しないか空の場合は既定の挨拶文を使用します。
 
-追加の調整をしたいときは、ルートにある `system-message.txt` に書かれた文言が最優先で読み込まれます。ファイルが存在しないか空の場合はデフォルトの挨拶文（README の冒頭にあるチャッピーの定義）を使用します。
+### ローカルでの起動
 
-`.env`を読み込むために npm run start を Ctrl-c で終了させ、再度 npm run start で起動。
+```sh
+npm start
+ngrok http 3000
+```
 
-ngrok を起動するたびに払い出される URL が異なるため、ngrok を再起動した場合は上記手順を繰り返す。
+ngrok が払い出した URL（`https://` は除く）を `.env` の `SERVER_URL` に設定して再起動します。
+ngrok を再起動するたびに URL が変わるため、その都度この手順を繰り返します。
 
-Vonage のダッシュボードから、作成したアプリケーションの設定画面を開き、**回答 URL** に ``ngrok の URL/incoming-call`` を設定、メソッドは`POST`。
-同じく、**イベント URL** に ``ngrok の URL/event`` を設定、メソッドは`POST`。
+Vonage ダッシュボードでアプリケーションの **回答 URL** に `<ngrok の URL>/answer`、
+**イベント URL** に `<ngrok の URL>/event` を、いずれもメソッド `POST` で設定します。
 
-### `/connect` でのアウトバウンド発信
+`npm run debug` を使うと、`scripts/change-url.js` が `.env` の値をもとに
+この Webhook URL の設定を自動で行ったうえでサーバーを起動します。
 
-Vonage Voice API v2 を使って任意の番号へ発信するには、以下のように `POST /connect` を呼び出します。呼び出し時に `VONAGE_APPLICATION_ID` と `VONAGE_PRIVATE_KEY_PATH` から生成した JWT を内部で利用し、相手が応答すると `/answer` の NCCO（ガイダンス → WebSocket 接続）を通じて OpenAI Realtime に接続します。
+### テスト
+
+アプリケーションにリンクした電話番号に電話をかけ、AI が応答することを確認します。
+
+ユニットテストは以下で実行できます。
+
+```sh
+npm test
+```
+
+## `/connect` でのアウトバウンド発信
+
+任意の番号へ発信するには `POST /connect` を呼び出します。
+相手が応答すると `/answer` の NCCO（ガイダンス → WebSocket 接続）が実行されます。
 
 ```sh
 curl -X POST https://<サーバー>/connect \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: ${VONAGE_APPLICATION_ID}" \
+  -H "X-API-Key: ${CONNECT_API_KEY}" \
   -d '{
     "to": "+818012345678",
     "from": "+815012345678"
   }'
 ```
 
-`from` を省略すると `VONAGE_OUTBOUND_FROM` の値が自動で利用されます。秘密鍵ファイル（例: `private.key`）は `.gitignore` されているので、ローカル/本番それぞれの環境に配置してください。
+`from` を省略すると `VONAGE_OUTBOUND_FROM` の値が使われます。
 
-`/connect` では `X-API-Key` ヘッダーを必須とし、値が `VONAGE_APPLICATION_ID` と一致しないリクエストは拒否します。バックエンドと連携するクライアントでは、このヘッダーを常に付与してください。
+`X-API-Key` ヘッダーは必須で、値が `CONNECT_API_KEY` と一致しないリクエストは拒否されます。
+`CONNECT_API_KEY` を設定していない場合は後方互換のため `VONAGE_APPLICATION_ID` と比較しますが、
+アプリケーション ID は秘密情報ではないため、専用の値を設定することを推奨します。
 
-### テスト
+## Fly.io へのデプロイ
 
-ngrokが起動しアプリケーションも起動していることを確認したら、アプリケーションにリンクした電話番号に電話をして、AIによる回答が戻って来ることを確認する。
-
-## Fly.io 環境のセットアップ
-
-Fly.io 環境を使って、アプリケーションをデプロイすることができます。
-
-### Fly.io CLIのインストール
+### Fly.io CLI のインストール
 
 ```sh
 brew install flyctl
@@ -110,57 +163,43 @@ brew install flyctl
 
 ### 初期セットアップ（一度だけ）
 
-まずは本番用の環境変数を作成します。
+本番用の環境変数を用意します。
 
 ```sh
 cp .env .env.production
 ```
 
-次に、アプリケーションのデプロイ環境を作成します。
+デプロイ環境を作成します。
 
 ```sh
 fly launch
 ```
 
-これでDocker環境を自動的に生成してくれます。
-サーバーのURL（XXXXXXXX.fly.dev）が払い出しされるので、`.env.production`の`SERVER_URL`を更新します。
+払い出されたサーバーの URL（`XXXXXXXX.fly.dev`）を `.env.production` の `SERVER_URL` に設定します。
 
-### 環境変数の指定
-
-以下のコマンドで、`.env.production`の内容をFly.ioの環境変数に設定できます。
+環境変数を Fly.io に反映します。
 
 ```sh
 fly secrets import < .env.production
 ```
 
-個別に環境変数を設定する場合は、以下のように設定することもできます。
-
-```sh
-fly secrets set NAME=VALUE
-```
-
-環境変数を変更したら、デプロイをし直してください。
+秘密鍵はファイルではなく `VONAGE_PRIVATE_KEY` として渡します
+（`npm run deploy` の中で `scripts/change-url.js` が自動的に設定します）。
 
 ### デプロイ
 
-以下のコマンドでデプロイができます。
-
 ```sh
 npm run deploy
 ```
 
-## ローカル実行とサーバー実行
+`main` ブランチへの push でも GitHub Actions からデプロイされます（`.github/workflows/fly-deploy.yml`）。
 
-`change-url.js`でVonageのアプリケーション環境を書き換えることができるので、以下のコマンドを使うと実行環境を切り替えながらテストができます。
+## 実行環境の切り替え
 
-ローカル実行
-
-```sh
-npm run debug
-```
-
-サーバー実行
+`scripts/change-url.js` が Vonage 側の Webhook URL を書き換えるので、
+以下のコマンドで環境を切り替えながらテストできます。
 
 ```sh
-npm run deploy
+npm run debug    # ローカル (.env を使用)
+npm run deploy   # Fly.io (.env.production を使用)
 ```

@@ -1,15 +1,9 @@
 #!/usr/bin/env node
 
-import * as path from 'path';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-import * as fs from 'fs';
+import * as path from 'node:path';
+import * as fs from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import dotenv from 'dotenv';
-import { spawnSync } from 'child_process';
-
-// ESMで__dirnameを取得するための対応
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 // コマンドライン引数の処理
 const args = process.argv.slice(2);
@@ -26,7 +20,7 @@ if (!fs.existsSync(path.resolve(process.cwd(), envFile))) {
 }
 
 // .envファイルを読み込む
-dotenv.config({ path: envFile });
+dotenv.config({ path: envFile, quiet: true });
 
 // 必要な環境変数を取得
 const serverUrl = process.env.SERVER_URL;
