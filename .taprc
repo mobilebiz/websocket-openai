@@ -1,0 +1,4 @@
+# test/helpers/ をテストファイルとして拾わないようにする
+include:
+  - test/**/*.test.js
+disable-coverage: true
