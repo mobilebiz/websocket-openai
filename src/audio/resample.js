@@ -99,7 +99,8 @@ export class FrameSplitter {
       frames.push(buffer.subarray(i * this.#frameSize, (i + 1) * this.#frameSize));
     }
 
-    this.#residual = buffer.subarray(frameCount * this.#frameSize);
+    // subarray は元バッファへの参照を持つため、端数はコピーして保持する
+    this.#residual = Buffer.from(buffer.subarray(frameCount * this.#frameSize));
     return frames;
   }
 

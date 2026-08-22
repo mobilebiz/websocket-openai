@@ -8,7 +8,7 @@ const cache = new WeakMap();
 /**
  * 秘密鍵を解決する。VONAGE_PRIVATE_KEY (本番: Fly secrets) を優先し、
  * 無ければ VONAGE_PRIVATE_KEY_PATH のファイルを読む (ローカル開発)。
- * @param {import('../config.js').loadConfig extends (...a: any) => infer C ? C : never} config
+ * @param {object} config loadConfig() の戻り値
  */
 const resolvePrivateKey = (config) => {
   const { privateKey, privateKeyPath } = config.vonage;
