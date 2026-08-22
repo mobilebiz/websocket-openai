@@ -45,7 +45,7 @@ tap.test('Fastify server', async t => {
         endpoint: [
           {
             type: 'websocket',
-            uri: `wss://${process.env.SERVER_URL}/media-stream`,
+            uri: `wss://${process.env.SERVER_URL}/media-stream?caller=unknown&called=unknown&uuid=`,
             contentType: 'audio/l16;rate=16000',
           }
         ]

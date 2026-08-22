@@ -1,4 +1,3 @@
-import fetch from 'node-fetch';
 import { createVonageJwt } from './lib/vonage-jwt.js';
 
 /**

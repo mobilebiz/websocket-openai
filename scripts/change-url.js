@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 
-import fetch from 'node-fetch';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';

@@ -1,8 +1,15 @@
 /.git
+/.github
 /node_modules
+/test
+/.tap
+/scripts
 .dockerignore
-.env
 Dockerfile
 fly.toml
-vcr.yml
+README.md
+.env
+.env.*
 private.key
+*.pem
+.DS_Store

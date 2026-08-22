@@ -5,7 +5,6 @@
  * @returns {Promise<string>} - 天気情報を含む文字列
  */
 import dotenv from 'dotenv';
-import fetch from 'node-fetch';
 
 dotenv.config();
 

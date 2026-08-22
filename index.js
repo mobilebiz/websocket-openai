@@ -5,7 +5,6 @@ import fastifyFormBody from '@fastify/formbody';
 import fastifyWs from '@fastify/websocket';
 import fs from 'fs';
 import path from 'path';
-import fetch from 'node-fetch';
 import jwt from 'jsonwebtoken';
 import { randomUUID } from 'crypto';
 import { pcm24To16 } from './lib/audio-converter.js';
@@ -194,6 +193,8 @@ fastify.all('/answer', async (request, reply) => {
   const uuid = query.uuid || body.uuid;
   const caller = from || 'unknown';
   const called = to || 'unknown';
+  // uuid が未指定でも文字列 "undefined" を URL に埋め込まないようにする
+  const streamQuery = new URLSearchParams({ caller, called, uuid: uuid ?? '' }).toString();
 
   // Vonage に返す NCCO: 簡単な挨拶のあと WebSocket へ接続
   const nccoResponse = [
@@ -207,7 +208,7 @@ fastify.all('/answer', async (request, reply) => {
       endpoint: [
         {
           type: 'websocket',
-          uri: `wss://${SERVER_URL}/media-stream?caller=${caller}&called=${called}&uuid=${uuid}`,
+          uri: `wss://${SERVER_URL}/media-stream?${streamQuery}`,
           contentType: 'audio/l16;rate=16000',
         }
       ]
