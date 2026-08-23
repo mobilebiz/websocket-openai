@@ -104,6 +104,20 @@ export class FrameSplitter {
     return frames;
   }
 
+  /**
+   * 保持している端数を無音で埋めて 1 フレームとして取り出す。
+   * 応答の最後がフレーム境界で終わらないときに末尾が欠けるのを防ぐ。
+   * @returns {Buffer | null} 端数が無ければ null
+   */
+  flush() {
+    if (this.#residual.length === 0) return null;
+
+    const frame = Buffer.alloc(this.#frameSize);
+    this.#residual.copy(frame);
+    this.#residual = Buffer.alloc(0);
+    return frame;
+  }
+
   /** 保持している端数を破棄する (割り込み時など) */
   reset() {
     this.#residual = Buffer.alloc(0);

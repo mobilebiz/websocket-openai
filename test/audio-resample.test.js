@@ -97,6 +97,22 @@ tap.test('FrameSplitter は端数を保持して音声を欠落させない', as
   t.same(splitter.push(Buffer.alloc(100)), [], 'reset 後は端数が破棄されている');
 });
 
+tap.test('FrameSplitter.flush は端数を無音で埋めて取り出す', async (t) => {
+  const splitter = new FrameSplitter(960);
+
+  t.equal(splitter.flush(), null, '端数が無ければ null');
+
+  splitter.push(Buffer.alloc(100, 7));
+  const frame = splitter.flush();
+
+  t.equal(frame.length, 960, '1 フレームぶんに広げる');
+  t.equal(frame[0], 7, '元データは先頭に残る');
+  t.equal(frame[99], 7);
+  t.equal(frame[100], 0, '残りは無音で埋める');
+
+  t.equal(splitter.flush(), null, 'flush 後は端数が空になる');
+});
+
 tap.test('連結された音声が分割されても総量が保たれる', async (t) => {
   const splitter = new FrameSplitter(960);
   const chunks = [1500, 300, 2000, 700]; // 合計 4500 バイト

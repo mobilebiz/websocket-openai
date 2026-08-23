@@ -70,6 +70,16 @@ export const createBridge = ({ config, connection, call, log }) => {
     }
   };
 
+  /**
+   * OpenAI 側を閉じる。CONNECTING のまま放置すると、通話が切れた後に接続が確立して
+   * セッションだけが残り続けるため、CLOSED / CLOSING 以外はすべて閉じにいく。
+   */
+  const closeOpenAi = () => {
+    if (openAiWs.readyState !== WebSocket.CLOSED && openAiWs.readyState !== WebSocket.CLOSING) {
+      openAiWs.close();
+    }
+  };
+
   /** 新しい応答が始まったので読み上げ状態を初期化する */
   const resetPlayback = () => {
     assistantItemId = null;
@@ -128,22 +138,38 @@ export const createBridge = ({ config, connection, call, log }) => {
         break;
       }
 
+      // 応答の最後がフレーム境界で終わらない場合、端数を無音で埋めて送り切る。
+      // 捨てると発話末尾が最大 20ms 欠ける
+      case 'response.output_audio.done': {
+        if (discardAssistantAudio) break;
+
+        const tail = outbound.flush();
+        if (tail) {
+          sendToVonage(pcm24To16(tail));
+          assistantAudioMs += FRAME_MS; // 無音パディングぶん最大 20ms 多く見積もる
+        }
+        break;
+      }
+
       // ユーザーが話し始めたら読み上げ中の応答を打ち切る
       case 'input_audio_buffer.speech_started': {
-        if (!assistantItemId || assistantAudioMs === 0) break;
+        // OpenAI 側の切り詰めは、実際に音を出しているときだけ意味がある
+        if (assistantItemId && assistantAudioMs > 0) {
+          log.info({ itemId: assistantItemId, audioMs: assistantAudioMs }, '👋 応答を中断します');
 
-        log.info({ itemId: assistantItemId, audioMs: assistantAudioMs }, '👋 応答を中断します');
+          // 実際に Vonage へ送出済みの長さで切る
+          sendToOpenAi({
+            type: 'conversation.item.truncate',
+            item_id: assistantItemId,
+            content_index: 0,
+            audio_end_ms: assistantAudioMs
+          });
+        }
 
-        // 実際に Vonage へ送出済みの長さで切る
-        sendToOpenAi({
-          type: 'conversation.item.truncate',
-          item_id: assistantItemId,
-          content_index: 0,
-          audio_end_ms: assistantAudioMs
-        });
-        // Vonage 側のバッファに残っている音声も破棄させる
+        // 20ms に満たない音声しか出していなくても、端数と後続の delta は必ず捨てる。
+        // ここを truncate の要否と一緒にすると、キャンセル済み応答の残りが
+        // ユーザーの発話中に流れてしまう
         sendToVonage(JSON.stringify({ action: 'clear' }));
-
         discardAssistantAudio = true;
         outbound.reset();
         assistantItemId = null;
@@ -231,12 +257,12 @@ export const createBridge = ({ config, connection, call, log }) => {
 
   connection.on('close', () => {
     log.info('Vonage 側の接続が切断されました');
-    if (openAiWs.readyState === WebSocket.OPEN) openAiWs.close();
+    closeOpenAi();
   });
 
   connection.on('error', (error) => {
     log.error({ err: error }, '👺 Vonage WebSocket エラー');
   });
 
-  return { close: () => openAiWs.close() };
+  return { close: closeOpenAi };
 };

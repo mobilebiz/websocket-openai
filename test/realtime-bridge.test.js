@@ -134,6 +134,71 @@ tap.test('フレーム端数をまたいでも音声が欠けない', async (t) 
   t.equal(total, expectedFrames * VONAGE_FRAME_BYTES, '旧実装では捨てられていた端数が保持される');
 });
 
+tap.test('応答終了時に端数フレームをフラッシュして末尾を欠けさせない', async (t) => {
+  const { vonage, openai } = await setup(t);
+  handshake(openai);
+  openai.receive({ type: 'response.created' });
+
+  // 960 の倍数にならない長さで応答が終わる
+  openai.receive({
+    type: 'response.output_audio.delta',
+    item_id: 'item-1',
+    delta: base64Audio(OPENAI_FRAME_BYTES + 300)
+  });
+  t.equal(vonage.sentBinary().length, 1, 'この時点では端数が残っている');
+
+  openai.receive({ type: 'response.output_audio.done' });
+  t.equal(vonage.sentBinary().length, 2, '端数が無音パディングされて送出される');
+  t.equal(vonage.sentBinary().at(-1).length, VONAGE_FRAME_BYTES, '最終フレームも 640 バイト');
+});
+
+tap.test('割り込み後の応答終了では端数を流さない', async (t) => {
+  const { vonage, openai } = await setup(t);
+  handshake(openai);
+  openai.receive({ type: 'response.created' });
+  openai.receive({
+    type: 'response.output_audio.delta',
+    item_id: 'item-1',
+    delta: base64Audio(OPENAI_FRAME_BYTES + 300)
+  });
+  openai.receive({ type: 'input_audio_buffer.speech_started' });
+
+  const before = vonage.sentBinary().length;
+  openai.receive({ type: 'response.output_audio.done' });
+  t.equal(vonage.sentBinary().length, before, '中断済みの応答の端数は送らない');
+});
+
+tap.test('20ms 未満しか出していなくても割り込みで後続音声を止める', async (t) => {
+  const { vonage, openai } = await setup(t);
+  handshake(openai);
+  openai.receive({ type: 'response.created' });
+
+  // 1 フレームに満たない delta。assistantAudioMs は 0 のまま
+  openai.receive({
+    type: 'response.output_audio.delta',
+    item_id: 'item-1',
+    delta: base64Audio(400)
+  });
+  t.equal(vonage.sentBinary().length, 0, 'まだ音声は出ていない');
+
+  openai.receive({ type: 'input_audio_buffer.speech_started' });
+
+  t.notOk(
+    openai.sentJson().some((event) => event.type === 'conversation.item.truncate'),
+    '送出済みの音声が無いので truncate は送らない'
+  );
+  const cleared = vonage.sent.filter((p) => typeof p === 'string').map((p) => JSON.parse(p));
+  t.same(cleared.at(-1), { action: 'clear' }, 'Vonage 側のバッファは破棄させる');
+
+  // キャンセルと競合して届く残りの delta が、端数を完成させて流れてしまわないこと
+  openai.receive({
+    type: 'response.output_audio.delta',
+    item_id: 'item-1',
+    delta: base64Audio(OPENAI_FRAME_BYTES)
+  });
+  t.equal(vonage.sentBinary().length, 0, 'ユーザーの発話中に古い音声を流さない');
+});
+
 tap.test('割り込み時に送出済みの長さで truncate する', async (t) => {
   const { vonage, openai } = await setup(t);
   handshake(openai);
@@ -241,6 +306,16 @@ tap.test('片側が切れたらもう片側も閉じる', async (t) => {
 
   vonage.emit('close');
   t.equal(openai.readyState, FakeSocket.CLOSED, 'Vonage 切断で OpenAI も閉じる');
+});
+
+tap.test('接続確立前に切られても OpenAI 側を閉じる', async (t) => {
+  const { vonage, openai } = await setup(t);
+
+  // OpenAI への接続がまだ CONNECTING の状態で通話が切れる
+  openai.readyState = FakeSocket.CONNECTING;
+  vonage.emit('close');
+
+  t.equal(openai.readyState, FakeSocket.CLOSED, 'CONNECTING のまま放置してセッションを残さない');
 });
 
 tap.test('通話ごとに状態が独立している', async (t) => {
