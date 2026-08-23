@@ -118,7 +118,7 @@ tap.test('POST /connect の認証', async (t) => {
     const response = await fastify.inject({
       method: 'POST',
       url: '/connect',
-      headers: { 'x-api-key': 'test-connect-kex' },
+      headers: { 'x-api-key': 'test-application-ie' },
       payload: { to: '+818012345678' }
     });
     t.equal(response.statusCode, 403);
@@ -128,15 +128,22 @@ tap.test('POST /connect の認証', async (t) => {
     const response = await fastify.inject({
       method: 'POST',
       url: '/connect',
-      headers: { 'x-api-key': TEST_ENV.CONNECT_API_KEY },
+      headers: { 'x-api-key': TEST_ENV.VONAGE_APPLICATION_ID },
       payload: {}
     });
     t.equal(response.statusCode, 400);
   });
 
-  await t.test('CONNECT_API_KEY 未設定時は VONAGE_APPLICATION_ID にフォールバックする', async (t) => {
-    const fallbackConfig = testConfig({ CONNECT_API_KEY: undefined });
-    t.equal(fallbackConfig.connectApiKey, TEST_ENV.VONAGE_APPLICATION_ID);
-    t.ok(fallbackConfig.connectApiKeyIsFallback);
+  await t.test('VONAGE_APPLICATION_ID 未設定なら 500', async (t) => {
+    const server = buildServer(testConfig({ VONAGE_APPLICATION_ID: undefined }));
+    t.teardown(() => server.close());
+
+    const response = await server.inject({
+      method: 'POST',
+      url: '/connect',
+      headers: { 'x-api-key': 'anything' },
+      payload: { to: '+818012345678' }
+    });
+    t.equal(response.statusCode, 500, 'キーを検証できないので通さない');
   });
 });

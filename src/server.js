@@ -43,12 +43,5 @@ export const buildServer = (config) => {
   fastify.register(connectRoutes, { config });
   fastify.register(mediaStreamRoutes, { config });
 
-  if (config.connectApiKeyIsFallback) {
-    fastify.log.warn(
-      'CONNECT_API_KEY が未設定のため /connect の認証に VONAGE_APPLICATION_ID を使用します。' +
-        'アプリケーション ID は秘密情報ではないため、CONNECT_API_KEY の設定を推奨します。'
-    );
-  }
-
   return fastify;
 };

@@ -64,11 +64,6 @@ export const loadConfig = (env = process.env, { warn = () => {} } = {}) => ({
     privateKeyPath: env.VONAGE_PRIVATE_KEY_PATH ?? ''
   },
 
-  // /connect を叩くための共有シークレット。
-  // 未設定なら従来どおりアプリケーション ID にフォールバックする (後方互換)
-  connectApiKey: env.CONNECT_API_KEY ?? env.VONAGE_APPLICATION_ID ?? '',
-  connectApiKeyIsFallback: !env.CONNECT_API_KEY && Boolean(env.VONAGE_APPLICATION_ID),
-
   openWeatherApiKey: env.OPEN_WEATHER_API_KEY ?? '',
 
   systemMessage: loadSystemMessage(warn)

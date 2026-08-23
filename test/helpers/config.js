@@ -7,7 +7,6 @@ export const TEST_ENV = {
   OPENAI_API_KEY: 'sk-test',
   OPENAI_MODEL: 'gpt-realtime',
   VONAGE_APPLICATION_ID: 'test-application-id',
-  CONNECT_API_KEY: 'test-connect-key',
   VONAGE_OUTBOUND_FROM: '+815012345678',
   VONAGE_TRANSPORT_NUMBER: '+818098765432',
   OPEN_WEATHER_API_KEY: 'test-weather-key'

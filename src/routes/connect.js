@@ -20,11 +20,11 @@ export default async function connectRoutes(fastify, { config }) {
     if (!apiKey) {
       return reply.status(401).send({ error: 'APIキーが指定されていません。' });
     }
-    if (!config.connectApiKey) {
-      request.log.error('CONNECT_API_KEY (または VONAGE_APPLICATION_ID) が未設定です。');
+    if (!config.vonage.applicationId) {
+      request.log.error('APIキー検証に必要な VONAGE_APPLICATION_ID が未設定です。');
       return reply.status(500).send({ error: 'サーバー側のAPIキー設定に問題があります。' });
     }
-    if (!secureEquals(apiKey, config.connectApiKey)) {
+    if (!secureEquals(apiKey, config.vonage.applicationId)) {
       return reply.status(403).send({ error: 'APIキーが一致しません。' });
     }
 
