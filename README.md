@@ -93,14 +93,23 @@ cp .env.example .env
 `OPENAI_MODEL` | ✅ | Realtime 対応モデル。既定は `gpt-realtime`
 `OPENAI_VOICE` | | 音声の種類。既定は `alloy`
 `OPENAI_TRANSCRIPTION_MODEL` | | ユーザー発話の文字起こしモデル。既定は `gpt-4o-transcribe`
-`VONAGE_APPLICATION_ID` | | Vonage アプリケーションの ID。`/connect` の `X-API-Key` としても使用します
-`VONAGE_PRIVATE_KEY_PATH` | | 秘密鍵ファイルのパス（例: `./private.key`）
-`VONAGE_PRIVATE_KEY` | | 秘密鍵そのもの。本番では Fly secrets 経由でこちらを使う
-`VONAGE_OUTBOUND_FROM` | | 発信元電話番号（E.164形式）
+`VONAGE_APPLICATION_ID` | △ | Vonage アプリケーションの ID。`/connect` の `X-API-Key` としても使うため、未設定だと `/connect` は 500 を返します
+`VONAGE_PRIVATE_KEY_PATH` | △ | 秘密鍵ファイルのパス（例: `./private.key`）
+`VONAGE_PRIVATE_KEY` | △ | 秘密鍵そのもの。本番では Fly secrets 経由でこちらを使う
+`VONAGE_OUTBOUND_FROM` | △ | 発信元電話番号（E.164形式）
 `VONAGE_TRANSPORT_NUMBER` | | 転送先のデフォルト番号。`transfer_call` で指定がない場合に使用
-`VONAGE_API_KEY` / `VONAGE_API_SECRET` | | `scripts/change-url.js` が Webhook URL を書き換える際に使用
-`OPEN_WEATHER_API_KEY` | | `get_weather` で使用する OpenWeatherMap の API キー
+`VONAGE_API_KEY` / `VONAGE_API_SECRET` | △ | `scripts/change-url.js` が Webhook URL を書き換える際に使用
+`OPEN_WEATHER_API_KEY` | △ | `get_weather` で使用する OpenWeatherMap の API キー
 `LOG_LEVEL` | | ログレベル。既定は `info`
+
+✅ は着信して会話するために必須の項目です。
+△ は特定の機能を使う場合にのみ必須で、内訳は以下のとおりです。
+
+- `/connect` でのアウトバウンド発信: `VONAGE_APPLICATION_ID`、`VONAGE_OUTBOUND_FROM`、
+  および `VONAGE_PRIVATE_KEY_PATH` か `VONAGE_PRIVATE_KEY` のいずれか
+- `transfer_call` での通話転送: 上記と同じ（発信元番号の表示に `VONAGE_OUTBOUND_FROM` を使用）
+- `get_weather` での天気取得: `OPEN_WEATHER_API_KEY`
+- `npm run debug` / `npm run deploy` での Webhook URL 自動更新: `VONAGE_API_KEY` と `VONAGE_API_SECRET`
 
 システムプロンプトはルートの `system-message.txt` が最優先で読み込まれます。
 ファイルが存在しないか空の場合は既定の挨拶文を使用します。
