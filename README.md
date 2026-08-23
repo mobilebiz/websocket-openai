@@ -88,7 +88,7 @@ cp .env.example .env
 
 キー | 必須 | 値
 :--|:--|:--
-`SERVER_URL` | ✅ | ngrok / Fly.io で払い出されたホスト名（`https://` は除く）
+`SERVER_URL` | ✅ | ngrok / Fly.io で払い出されたホスト名（`https://` は除く）。Vonage の WebSocket は `wss://` のみ対応のため `http://` は指定できません
 `OPENAI_API_KEY` | ✅ | OpenAI のシークレットキー（`sk-` から始まる文字列）
 `OPENAI_MODEL` | ✅ | Realtime 対応モデル。既定は `gpt-realtime`
 `OPENAI_VOICE` | | 音声の種類。既定は `alloy`

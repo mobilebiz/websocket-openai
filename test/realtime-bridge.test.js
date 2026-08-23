@@ -4,22 +4,35 @@ import { OPENAI_FRAME_BYTES, VONAGE_FRAME_BYTES } from '../src/audio/resample.js
 import { testConfig } from './helpers/config.js';
 import { FakeSocket, silentLog } from './helpers/fake-socket.js';
 
+/** テストから進められる時計 */
+const createClock = () => {
+  let current = 1_000_000;
+  return {
+    now: () => current,
+    advance: (ms) => {
+      current += ms;
+    }
+  };
+};
+
 /** ws を差し替えた bridge を読み込み、Vonage 側と OpenAI 側のソケットを返す */
 const setup = async (t, { config = testConfig() } = {}) => {
   const { createBridge } = await t.mockImport('../src/realtime/bridge.js', {
     ws: { default: FakeSocket, WebSocket: FakeSocket }
   });
 
+  const clock = createClock();
   const vonage = new FakeSocket();
   createBridge({
     config,
     connection: vonage,
-    call: { caller: '818012345678', called: '815012345678', uuid: 'call-uuid-1' },
-    log: silentLog
+    call: { caller: '818012345678', called: '815012345678', uuid: 'call-uuid-1', direction: 'inbound' },
+    log: silentLog,
+    now: clock.now
   });
   const openai = FakeSocket.last; // bridge が内部で生成したソケット
 
-  return { vonage, openai };
+  return { vonage, openai, clock };
 };
 
 /** OpenAI 接続確立〜セッション確定までを進める */
@@ -199,8 +212,8 @@ tap.test('20ms 未満しか出していなくても割り込みで後続音声�
   t.equal(vonage.sentBinary().length, 0, 'ユーザーの発話中に古い音声を流さない');
 });
 
-tap.test('割り込み時に送出済みの長さで truncate する', async (t) => {
-  const { vonage, openai } = await setup(t);
+tap.test('割り込み時に再生済みの長さで truncate する', async (t) => {
+  const { vonage, openai, clock } = await setup(t);
   handshake(openai);
   openai.receive({ type: 'response.created' });
 
@@ -210,16 +223,40 @@ tap.test('割り込み時に送出済みの長さで truncate する', async (t)
     item_id: 'item-1',
     delta: base64Audio(OPENAI_FRAME_BYTES * 3)
   });
+  clock.advance(100); // 送出ぶんは再生し終えている
   openai.receive({ type: 'input_audio_buffer.speech_started' });
 
   const truncate = openai.sentJson().find((event) => event.type === 'conversation.item.truncate');
   t.ok(truncate, 'truncate を送る');
   t.equal(truncate.item_id, 'item-1');
   t.equal(truncate.content_index, 0);
-  t.equal(truncate.audio_end_ms, 60, '実際に Vonage へ送った長さと一致する');
+  t.equal(truncate.audio_end_ms, 60, '送出量が上限になる');
 
   const clear = vonage.sent.filter((payload) => typeof payload === 'string').map((p) => JSON.parse(p));
   t.same(clear.at(-1), { action: 'clear' }, 'Vonage 側のバッファも破棄させる');
+});
+
+tap.test('生成が再生より速いとき、聞こえた分だけで truncate する', async (t) => {
+  const { openai, clock } = await setup(t);
+  handshake(openai);
+  openai.receive({ type: 'response.created' });
+
+  // Realtime は実時間より速く返す: 1 秒ぶん (50 フレーム) を一気に受け取る
+  openai.receive({
+    type: 'response.output_audio.delta',
+    item_id: 'item-1',
+    delta: base64Audio(OPENAI_FRAME_BYTES * 50)
+  });
+  // 発信者にはまだ 200ms しか聞こえていない
+  clock.advance(200);
+  openai.receive({ type: 'input_audio_buffer.speech_started' });
+
+  const truncate = openai.sentJson().find((event) => event.type === 'conversation.item.truncate');
+  t.equal(
+    truncate.audio_end_ms,
+    200,
+    '送出済みの 1000ms ではなく、実際に聞こえた 200ms で切る'
+  );
 });
 
 tap.test('読み上げていなければ割り込みで truncate しない', async (t) => {
@@ -326,7 +363,12 @@ tap.test('通話ごとに状態が独立している', async (t) => {
 
   const makeCall = (uuid) => {
     const vonage = new FakeSocket();
-    createBridge({ config, connection: vonage, call: { caller: 'a', called: 'b', uuid }, log: silentLog });
+    createBridge({
+      config,
+      connection: vonage,
+      call: { caller: 'a', called: 'b', uuid, direction: 'inbound' },
+      log: silentLog
+    });
     const openai = FakeSocket.last;
     openai.emit('open');
     openai.receive({ type: 'session.updated' });

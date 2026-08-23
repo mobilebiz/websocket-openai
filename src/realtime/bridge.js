@@ -36,10 +36,11 @@ const VERBOSE_EVENTS = new Set([
  * @param {object} params
  * @param {object} params.config loadConfig() の戻り値
  * @param {import('ws').WebSocket} params.connection Vonage 側の WebSocket
- * @param {{ caller: string, called: string, uuid: string }} params.call
+ * @param {{ caller: string, called: string, uuid: string, direction: string }} params.call
  * @param {import('fastify').FastifyBaseLogger} params.log
+ * @param {() => number} [params.now] 現在時刻 (テストから差し替えるため)
  */
-export const createBridge = ({ config, connection, call, log }) => {
+export const createBridge = ({ config, connection, call, log, now = () => Date.now() }) => {
   // ---- 通話ごとの状態 -------------------------------------------------
   let openAiReady = false;
   let greeted = false;
@@ -47,6 +48,8 @@ export const createBridge = ({ config, connection, call, log }) => {
   let assistantItemId = null;
   /** 現在の応答について Vonage へ送出済みの音声の長さ (ms) */
   let assistantAudioMs = 0;
+  /** 現在の応答の 1 フレーム目を送出した時刻 */
+  let playbackStartedAt = 0;
   /** 割り込み直後、次の応答が始まるまで音声を捨てる */
   let discardAssistantAudio = false;
 
@@ -84,9 +87,20 @@ export const createBridge = ({ config, connection, call, log }) => {
   const resetPlayback = () => {
     assistantItemId = null;
     assistantAudioMs = 0;
+    playbackStartedAt = 0;
     discardAssistantAudio = false;
     outbound.reset();
   };
+
+  /**
+   * 発信者が実際に聞いたと思われる音声の長さ (ms)。
+   *
+   * Realtime API は実時間より速く音声を返すため、送出済みの量をそのまま使うと
+   * 「まだ聞こえていない部分まで話した」ことになってしまう。Vonage は受け取った音声を
+   * 実時間で再生するので、経過時間で頭打ちにする。
+   */
+  const playedMs = () =>
+    Math.min(assistantAudioMs, playbackStartedAt ? Math.max(0, now() - playbackStartedAt) : 0);
 
   // ---- OpenAI 接続 ----------------------------------------------------
   openAiWs.on('open', () => {
@@ -132,6 +146,7 @@ export const createBridge = ({ config, connection, call, log }) => {
         // 24kHz の応答音声を 20ms フレームに切り出し、16kHz に落として Vonage へ流す。
         // 端数は FrameSplitter が保持するので音が欠けない。
         for (const frame of outbound.push(Buffer.from(event.delta, 'base64'))) {
+          if (assistantAudioMs === 0) playbackStartedAt = now();
           sendToVonage(pcm24To16(frame));
           assistantAudioMs += FRAME_MS;
         }
@@ -155,14 +170,20 @@ export const createBridge = ({ config, connection, call, log }) => {
       case 'input_audio_buffer.speech_started': {
         // OpenAI 側の切り詰めは、実際に音を出しているときだけ意味がある
         if (assistantItemId && assistantAudioMs > 0) {
-          log.info({ itemId: assistantItemId, audioMs: assistantAudioMs }, '👋 応答を中断します');
+          const heardMs = playedMs();
+          log.info(
+            { itemId: assistantItemId, sentMs: assistantAudioMs, heardMs },
+            '👋 応答を中断します'
+          );
 
-          // 実際に Vonage へ送出済みの長さで切る
+          // 送出量ではなく、発信者が聞いたと思われる長さで切る。
+          // ここで送出量を渡すと、まだ聞こえていない内容まで
+          // 「話した」ことになり、モデルが繰り返さなくなる
           sendToOpenAi({
             type: 'conversation.item.truncate',
             item_id: assistantItemId,
             content_index: 0,
-            audio_end_ms: assistantAudioMs
+            audio_end_ms: heardMs
           });
         }
 
@@ -174,6 +195,7 @@ export const createBridge = ({ config, connection, call, log }) => {
         outbound.reset();
         assistantItemId = null;
         assistantAudioMs = 0;
+        playbackStartedAt = 0;
         break;
       }
 

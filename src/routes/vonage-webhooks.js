@@ -18,8 +18,10 @@ export default async function vonageWebhookRoutes(fastify, { config }) {
     const caller = params.from || 'unknown';
     const called = params.to || 'unknown';
     const uuid = params.uuid ?? '';
+    // /connect からの発信のみ outbound。着信は既定の inbound
+    const direction = params.direction === 'outbound' ? 'outbound' : 'inbound';
 
-    request.log.info({ caller, called, uuid }, '/answer が呼ばれました');
+    request.log.info({ caller, called, uuid, direction }, '/answer が呼ばれました');
 
     const ncco = [
       {
@@ -32,7 +34,7 @@ export default async function vonageWebhookRoutes(fastify, { config }) {
         endpoint: [
           {
             type: 'websocket',
-            uri: buildWebSocketUrl(config, '/media-stream', { caller, called, uuid }),
+            uri: buildWebSocketUrl(config, '/media-stream', { caller, called, uuid, direction }),
             contentType: `audio/l16;rate=${VONAGE_RATE}`
           }
         ]

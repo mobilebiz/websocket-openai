@@ -51,7 +51,9 @@ export const createCall = (config, { to, from }) =>
   request(config, 'POST', `${API_BASE}/v2/calls`, {
     to: [{ type: 'phone', number: to }],
     from: { type: 'phone', number: from },
-    answer_url: [buildPublicUrl(config, '/answer')],
+    // 発信では webhook の from/to が「こちら/相手」になり着信と逆になるため、
+    // /answer に通話の向きを伝える
+    answer_url: [buildPublicUrl(config, '/answer?direction=outbound')],
     answer_method: 'POST',
     event_url: [buildPublicUrl(config, '/event')],
     event_method: 'POST'
@@ -76,7 +78,8 @@ export const transferCall = (config, { uuid, to, from }) => {
         {
           action: 'connect',
           endpoint: [{ type: 'phone', number: to }],
-          from
+          // 空文字の from は Vonage に拒否される。未設定なら省略して既定の発信者番号に任せる
+          ...(from ? { from } : {})
         }
       ]
     }

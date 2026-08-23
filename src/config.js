@@ -83,7 +83,13 @@ export const validateConfig = (config) => {
   const problems = [];
   if (!config.openai.apiKey) problems.push('OPENAI_API_KEY が設定されていません。');
   if (!config.openai.model) problems.push('OPENAI_MODEL が設定されていません。');
-  if (!config.serverUrl) problems.push('SERVER_URL が設定されていません。');
+  if (!config.serverUrl) {
+    problems.push('SERVER_URL が設定されていません。');
+  } else if (config.serverUrl.startsWith('http://')) {
+    // Vonage の NCCO で指定できる WebSocket は wss:// のみなので、
+    // ws:// を組み立てても接続できない。設定ミスとして弾く
+    problems.push('SERVER_URL に http:// は指定できません。https のホスト名を指定してください。');
+  }
   return problems;
 };
 

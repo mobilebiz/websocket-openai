@@ -9,18 +9,27 @@ const sanitizeNumber = (value) => (/^\+?[0-9]{5,15}$/.test(String(value ?? '')) 
 
 /**
  * 通話固有の情報を system メッセージに足す。
+ *
+ * Vonage の webhook は通話の向きに関わらず from=発信側 / to=着信側で届く。
+ * /connect でこちらから架けた場合は発信側がこちらになるため、役割を入れ替える。
+ *
  * @param {string} systemMessage
- * @param {{ caller: string, called: string }} call
+ * @param {{ caller: string, called: string, direction?: string }} call
  */
-export const buildInstructions = (systemMessage, { caller, called }) =>
-  [
+export const buildInstructions = (systemMessage, { caller, called, direction = 'inbound' }) => {
+  const isOutbound = direction === 'outbound';
+  const otherParty = sanitizeNumber(isOutbound ? called : caller);
+  const ourNumber = sanitizeNumber(isOutbound ? caller : called);
+
+  return [
     systemMessage,
     '',
     '電話番号情報:',
-    `- 発信者番号（相手の電話番号）: ${sanitizeNumber(caller)}`,
-    `- 着信番号（かけた先の番号）: ${sanitizeNumber(called)}`,
+    `- 通話相手の電話番号: ${otherParty}`,
+    `- こちら側の電話番号: ${ourNumber}`,
     '電話番号を聞かれた場合、先頭が81から始まる番号であれば、それを0に置き換えて、日本のローカル番号として回答してください。'
   ].join('\n');
+};
 
 /**
  * session.update のペイロードを組み立てる (Realtime API GA / 2025-08-28 スキーマ)。

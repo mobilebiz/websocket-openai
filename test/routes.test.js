@@ -45,7 +45,7 @@ tap.test('POST /answer', async (t) => {
         endpoint: [
           {
             type: 'websocket',
-            uri: `wss://${TEST_ENV.SERVER_URL}/media-stream?caller=unknown&called=unknown&uuid=`,
+            uri: `wss://${TEST_ENV.SERVER_URL}/media-stream?caller=unknown&called=unknown&uuid=&direction=inbound`,
             contentType: 'audio/l16;rate=16000'
           }
         ]
@@ -65,6 +65,27 @@ tap.test('POST /answer', async (t) => {
     t.equal(query.get('caller'), '818012345678');
     t.equal(query.get('called'), '815012345678');
     t.equal(query.get('uuid'), 'call-uuid-1');
+    t.equal(query.get('direction'), 'inbound', '既定は着信');
+  });
+
+  await t.test('/connect からの発信は direction=outbound を引き継ぐ', async (t) => {
+    const response = await fastify.inject({
+      method: 'POST',
+      url: '/answer?direction=outbound',
+      payload: { from: '815012345678', to: '818012345678', uuid: 'call-uuid-2' }
+    });
+    const uri = response.json()[1].endpoint[0].uri;
+    const query = new URL(uri.replace('wss://', 'https://')).searchParams;
+
+    t.equal(query.get('direction'), 'outbound');
+  });
+
+  await t.test('不正な direction は inbound に丸める', async (t) => {
+    const response = await fastify.inject({ method: 'POST', url: '/answer?direction=../evil' });
+    const uri = response.json()[1].endpoint[0].uri;
+    const query = new URL(uri.replace('wss://', 'https://')).searchParams;
+
+    t.equal(query.get('direction'), 'inbound');
   });
 
   await t.test('uuid 未指定でも文字列 "undefined" を埋め込まない', async (t) => {
