@@ -1,6 +1,21 @@
 node_modules/
+
+# 環境変数（.env.example のみ追跡する）
 .env
-.env.production
-vcr.yml
+.env.*
+!.env.example
+
+# Vonage の秘密鍵
 private.key
+*.pem
+
+# テスト成果物
+.tap/
+coverage/
+
+# OS が生成するゴミ
+.DS_Store
+__MACOSX/
+
+# エディタ固有の設定（従来どおり追跡しない）
 .cursorrules

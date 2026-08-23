@@ -1,0 +1,11 @@
+# test/helpers/ をテストファイルとして拾わないようにする
+include:
+  - test/**/*.test.js
+
+# 外部 API を叩く経路は落とせないため 100% は求めず、下限だけ引いておく
+statements: 80
+branches: 75
+functions: 80
+lines: 80
+coverage-report:
+  - text-summary
