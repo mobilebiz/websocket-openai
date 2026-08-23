@@ -19,6 +19,12 @@ const fastify = buildServer(config);
 
 try {
   await fastify.listen({ port: config.port, host: config.host });
+  fastify.log.info(
+    { role: config.appRole, mediaStreamHost: config.mediaStreamHost },
+    config.appRole === 'front'
+      ? 'front として起動しました (NCCO を返すのみ)'
+      : 'full として起動しました'
+  );
 } catch (error) {
   fastify.log.error({ err: error }, 'サーバーの起動に失敗しました');
   process.exit(1);

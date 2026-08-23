@@ -39,14 +39,25 @@ export const loadSystemMessage = (warn = () => {}) => {
  */
 export const loadConfig = (env = process.env, { warn = () => {} } = {}) => ({
   rootDir: ROOT_DIR,
-  port: Number(env.PORT ?? 3000),
+  // VCR は待ち受けポートを VCR_PORT で指定してくる
+  port: Number(env.VCR_PORT ?? env.PORT ?? 3000),
   host: env.HOST ?? '0.0.0.0',
+
+  // full : Vonage の音声を OpenAI へ中継する本体 (Fly.io)
+  // front: NCCO を返すだけの前段 (VCR)。answer_url の 5 秒制限を本体の
+  //        コールドスタートから切り離すために置く
+  appRole: env.APP_ROLE === 'front' ? 'front' : 'full',
   logLevel: env.LOG_LEVEL ?? (env.NODE_ENV === 'test' ? 'silent' : 'info'),
   // 本番 (Fly.io) では構造化ログのまま、ローカルでは pino-pretty で整形する
   prettyLogs: env.NODE_ENV !== 'production' && env.NODE_ENV !== 'test',
 
-  // ngrok や Fly.io で払い出されるホスト名。プロトコルの有無はどちらでもよい
+  // 自分自身のホスト名。ngrok / Fly.io / VCR で払い出されるもの
+  // (プロトコルの有無はどちらでもよい)
   serverUrl: env.SERVER_URL ?? '',
+
+  // Vonage を WebSocket で繋ぎにいかせる先。
+  // front では本体 (Fly.io) を指し、full では自分自身になる
+  mediaStreamHost: env.MEDIA_STREAM_HOST ?? env.SERVER_URL ?? '',
 
   openai: {
     apiKey: env.OPENAI_API_KEY ?? '',
@@ -76,8 +87,15 @@ export const loadConfig = (env = process.env, { warn = () => {} } = {}) => ({
  */
 export const validateConfig = (config) => {
   const problems = [];
-  if (!config.openai.apiKey) problems.push('OPENAI_API_KEY が設定されていません。');
-  if (!config.openai.model) problems.push('OPENAI_MODEL が設定されていません。');
+
+  // front は NCCO を返すだけなので OpenAI の設定を持たない
+  if (config.appRole === 'full') {
+    if (!config.openai.apiKey) problems.push('OPENAI_API_KEY が設定されていません。');
+    if (!config.openai.model) problems.push('OPENAI_MODEL が設定されていません。');
+  } else if (!config.mediaStreamHost || config.mediaStreamHost === config.serverUrl) {
+    problems.push('APP_ROLE=front では MEDIA_STREAM_HOST に本体のホスト名が必要です。');
+  }
+
   if (!config.serverUrl) {
     problems.push('SERVER_URL が設定されていません。');
   } else if (config.serverUrl.startsWith('http://')) {
@@ -107,7 +125,8 @@ export const buildPublicUrl = (config, pathname = '') => {
  * @param {Record<string, string>} [query]
  */
 export const buildWebSocketUrl = (config, pathname, query = {}) => {
-  const host = config.serverUrl.replace(/^https?:\/\//, '');
+  // 接続先は自分自身とは限らない (front では本体のホストを指す)
+  const host = config.mediaStreamHost.replace(/^https?:\/\//, '');
   const search = new URLSearchParams(query).toString();
   return `wss://${host}${pathname}${search ? `?${search}` : ''}`;
 };

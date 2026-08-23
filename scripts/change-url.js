@@ -83,12 +83,15 @@ function updateFlySecretsIfNeeded() {
   }
 }
 
-// Webhook URLの設定
-const answerUrl = `https://${serverUrl}/answer`;
+// Webhook URLの設定。
+// answer_url には 5 秒の応答制限があるため、常時起動している前段 (VCR) を
+// ANSWER_URL_HOST で指定できるようにしている。未指定なら本体をそのまま使う。
+const answerHost = process.env.ANSWER_URL_HOST || serverUrl;
+const answerUrl = `https://${answerHost}/answer`;
 const eventUrl = `https://${serverUrl}/event`;
 
 console.log(`Vonageアプリケーション(ID: ${applicationId})のWebhook URLを更新します...`);
-console.log(`- Answer URL: ${answerUrl} (メソッド: POST)`);
+console.log(`- Answer URL: ${answerUrl} (メソッド: POST)${answerHost === serverUrl ? '' : ' ← 前段 (VCR)'}`);
 console.log(`- Event URL: ${eventUrl} (メソッド: POST)`);
 
 // Basic認証ヘッダーを作成

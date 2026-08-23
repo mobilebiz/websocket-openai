@@ -7,6 +7,7 @@
 .dockerignore
 Dockerfile
 fly.toml
+vcr.yml
 README.md
 .env
 .env.*

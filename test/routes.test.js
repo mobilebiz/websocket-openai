@@ -1,7 +1,7 @@
 import tap from 'tap';
 
 import { buildServer } from '../src/server.js';
-import { testConfig, TEST_ENV } from './helpers/config.js';
+import { frontConfig, testConfig, TEST_ENV } from './helpers/config.js';
 
 const config = testConfig();
 const fastify = buildServer(config);
@@ -146,4 +146,86 @@ tap.test('POST /connect の認証', async (t) => {
     });
     t.equal(response.statusCode, 500, 'キーを検証できないので通さない');
   });
+});
+
+tap.test('APP_ROLE=front (VCR に置く前段)', async (t) => {
+  const { buildServer: build } = await import('../src/server.js');
+  const front = build(frontConfig());
+  t.teardown(() => front.close());
+
+  await t.test('NCCO の WebSocket は本体 (Fly.io) を指す', async (t) => {
+    const response = await front.inject({
+      method: 'POST',
+      url: '/answer',
+      payload: { from: '818012345678', to: '815012345678', uuid: 'u-1' }
+    });
+
+    t.equal(response.statusCode, 200);
+    const uri = response.json()[1].endpoint[0].uri;
+    t.match(uri, 'wss://fly.example.com/media-stream', '自分自身ではなく本体へ繋がせる');
+    t.notMatch(uri, 'vcr.example.com');
+  });
+
+  await t.test('音声を扱う経路は持たない', async (t) => {
+    const connect = await front.inject({ method: 'POST', url: '/connect', payload: {} });
+    t.equal(connect.statusCode, 404, '/connect は front には無い');
+
+    const stream = await front.inject({ method: 'GET', url: '/media-stream' });
+    t.equal(stream.statusCode, 404, '/media-stream は front には無い');
+  });
+
+  await t.test('ヘルスチェックは VCR が要求するので残す', async (t) => {
+    for (const url of ['/_/health', '/_/metrics']) {
+      const response = await front.inject({ method: 'GET', url });
+      t.equal(response.statusCode, 200, `${url} は front でも応答する`);
+    }
+  });
+});
+
+tap.test('front は NCCO を返す前に本体を起こす', async (t) => {
+  const calls = [];
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    calls.push(String(url));
+    return { status: 200 };
+  };
+  t.teardown(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  const { buildServer: build } = await import('../src/server.js');
+
+  const front = build(frontConfig());
+  t.teardown(() => front.close());
+  await front.inject({ method: 'POST', url: '/answer', payload: {} });
+  await new Promise((resolve) => setImmediate(resolve));
+
+  t.same(calls, ['https://fly.example.com/_/health'], '本体のヘルスチェックを叩く');
+
+  // full では自分自身なので起こす必要がない
+  calls.length = 0;
+  const full = build(testConfig());
+  t.teardown(() => full.close());
+  await full.inject({ method: 'POST', url: '/answer', payload: {} });
+  await new Promise((resolve) => setImmediate(resolve));
+
+  t.same(calls, [], 'full では余計なリクエストを出さない');
+});
+
+tap.test('front はウェイクアップに失敗しても NCCO を返す', async (t) => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => {
+    throw new Error('connection refused');
+  };
+  t.teardown(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  const { buildServer: build } = await import('../src/server.js');
+  const front = build(frontConfig());
+  t.teardown(() => front.close());
+
+  const response = await front.inject({ method: 'POST', url: '/answer', payload: {} });
+  t.equal(response.statusCode, 200, '本体が落ちていても通話は繋ごうとする');
+  await new Promise((resolve) => setImmediate(resolve));
 });

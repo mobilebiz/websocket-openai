@@ -1,3 +1,4 @@
+import { createRequire } from 'node:module';
 import Fastify from 'fastify';
 import fastifyFormBody from '@fastify/formbody';
 import fastifyWs from '@fastify/websocket';
@@ -6,6 +7,21 @@ import healthRoutes from './routes/health.js';
 import vonageWebhookRoutes from './routes/vonage-webhooks.js';
 import connectRoutes from './routes/connect.js';
 import mediaStreamRoutes from './routes/media-stream.js';
+
+const require = createRequire(import.meta.url);
+
+/**
+ * pino-pretty は devDependency なので、本番相当の環境には入っていない。
+ * NODE_ENV を設定しない実行環境 (VCR など) でも落ちないよう、実在を確かめてから使う。
+ */
+const canPrettyPrint = () => {
+  try {
+    require.resolve('pino-pretty');
+    return true;
+  } catch {
+    return false;
+  }
+};
 
 /**
  * Fastify インスタンスを組み立てる。
@@ -24,7 +40,7 @@ export const buildServer = (config) => {
         censor: '[REDACTED]'
       },
       // 開発時は会話ログを追いやすいように整形する (本番は JSON のまま)
-      ...(config.prettyLogs
+      ...(config.prettyLogs && canPrettyPrint()
         ? {
             transport: {
               target: 'pino-pretty',
@@ -36,12 +52,17 @@ export const buildServer = (config) => {
   });
 
   fastify.register(fastifyFormBody);
-  fastify.register(fastifyWs);
 
+  // ヘルスチェックと NCCO の返却は front / full の両方で必要
   fastify.register(healthRoutes);
   fastify.register(vonageWebhookRoutes, { config });
-  fastify.register(connectRoutes, { config });
-  fastify.register(mediaStreamRoutes, { config });
+
+  // front (VCR) は NCCO を返すだけなので、音声を扱う経路は持たない
+  if (config.appRole === 'full') {
+    fastify.register(fastifyWs);
+    fastify.register(connectRoutes, { config });
+    fastify.register(mediaStreamRoutes, { config });
+  }
 
   return fastify;
 };

@@ -3,6 +3,31 @@
 Vonage Voice API の音声ストリームを OpenAI Realtime API (GA / 2025-08-28 スキーマ) に中継し、
 電話越しに音声対話ができるサーバーです。Function Calling による天気検索や通話転送にも対応しています。
 
+## 構成
+
+同じコードベースを 2 つの役割で動かします。`APP_ROLE` で切り替えます。
+
+役割 | 置き場所 | 担当
+:--|:--|:--
+`full` (既定) | Fly.io | NCCO の返却、音声の WebSocket 中継、`/connect`、Function Calling
+`front` | Vonage VCR | **NCCO の返却のみ**。WebSocket の接続先として本体を指す
+
+**なぜ前段を置くのか**: Vonage の `answer_url` は応答を **5 秒**しか待ちません
+(`socket_timeout` の上限が 5,000ms のため延ばせません)。Fly.io はアイドル時にマシンを
+停止する設定のため、着信時のコールドスタート (実測 約 8 秒) が間に合わず通話が切断されます。
+
+そこで常時起動している VCR に `answer_url` を受けさせ、時間のかかる WebSocket 接続だけを
+Fly.io に向けます。`front` は NCCO を返す前に本体へ投げっぱなしのリクエストを打つので、
+NCCO の `talk` を読み上げている 4〜5 秒がそのまま本体の起動時間になります。
+
+```
+着信 → VCR /answer (即応答 + 本体を起こす)
+     → talk の読み上げ (この間に Fly.io が起動)
+     → connect で wss://<Fly.io>/media-stream
+```
+
+ローカル開発 (ngrok) では前段は不要です。`APP_ROLE` を省略すれば `full` として単体で動きます。
+
 ## 概要
 
 ```mermaid
@@ -101,6 +126,9 @@ cp .env.example .env
 `VONAGE_API_KEY` / `VONAGE_API_SECRET` | △ | `scripts/change-url.js` が Webhook URL を書き換える際に使用
 `OPEN_WEATHER_API_KEY` | △ | `get_weather` で使用する OpenWeatherMap の API キー
 `LOG_LEVEL` | | ログレベル。既定は `info`
+`APP_ROLE` | | `full`（既定）か `front`。VCR に置く前段でのみ `front` を指定
+`MEDIA_STREAM_HOST` | △ | WebSocket の接続先ホスト。`front` では本体（Fly.io）のホスト名が必須
+`ANSWER_URL_HOST` | | `scripts/change-url.js` が `answer_url` に設定するホスト。前段を使う場合に VCR のホスト名を指定
 
 ✅ は着信して会話するために必須の項目です。
 △ は特定の機能を使う場合にのみ必須で、内訳は以下のとおりです。
@@ -110,6 +138,7 @@ cp .env.example .env
 - `transfer_call` での通話転送: 上記と同じ（発信元番号の表示に `VONAGE_OUTBOUND_FROM` を使用）
 - `get_weather` での天気取得: `OPEN_WEATHER_API_KEY`
 - `npm run debug` / `npm run deploy` での Webhook URL 自動更新: `VONAGE_API_KEY` と `VONAGE_API_SECRET`
+- `APP_ROLE=front` での起動: `MEDIA_STREAM_HOST`
 
 システムプロンプトはルートの `system-message.txt` が最優先で読み込まれます。
 ファイルが存在しないか空の場合は既定の挨拶文を使用します。
@@ -200,6 +229,29 @@ npm run deploy
 ```
 
 `main` ブランチへの push でも GitHub Actions からデプロイされます（`.github/workflows/fly-deploy.yml`）。
+
+## VCR (前段) のデプロイ
+
+`answer_url` を受ける前段を Vonage Cloud Runtime に置きます。設定は `vcr.yml` にあります。
+
+```sh
+vcr deploy
+```
+
+`vcr` CLI が別の Vonage アカウントで認証されている場合は、このプロジェクトのアカウントを明示します。
+
+```sh
+vcr deploy --api-key "$VONAGE_API_KEY" --api-secret "$VONAGE_API_SECRET"
+```
+
+デプロイ後、`.env.production` に前段のホスト名を設定してから Webhook URL を更新します。
+
+```sh
+ANSWER_URL_HOST=neru-xxxxxxxx-websocket-openai-dev.apse1.runtime.vonage.cloud
+```
+
+これで `npm run deploy` 実行時に `answer_url` が VCR、`event_url` が Fly.io を指すようになります。
+`event_url` は応答が遅れても通話に影響しないため、ログを 1 箇所に集める目的で本体に残しています。
 
 ## 実行環境の切り替え
 
