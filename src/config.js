@@ -81,6 +81,19 @@ export const loadConfig = (env = process.env, { warn = () => {} } = {}) => ({
 });
 
 /**
+ * ホスト名を比較・組み立てできる形に揃える。
+ * SERVER_URL はプロトコル付きでも省略でも受け付けるため、
+ * 素朴に文字列比較すると `https://x` と `x` を別物と見なしてしまう。
+ * @param {string} value
+ */
+export const normalizeHost = (value) =>
+  String(value ?? '')
+    .trim()
+    .replace(/^https?:\/\//i, '')
+    .replace(/\/+$/, '')
+    .toLowerCase();
+
+/**
  * 起動を止めるべき設定不足を列挙する。
  * @param {ReturnType<typeof loadConfig>} config
  * @returns {string[]} 問題点のリスト (空なら問題なし)
@@ -92,7 +105,11 @@ export const validateConfig = (config) => {
   if (config.appRole === 'full') {
     if (!config.openai.apiKey) problems.push('OPENAI_API_KEY が設定されていません。');
     if (!config.openai.model) problems.push('OPENAI_MODEL が設定されていません。');
-  } else if (!config.mediaStreamHost || config.mediaStreamHost === config.serverUrl) {
+  } else if (
+    !config.mediaStreamHost ||
+    normalizeHost(config.mediaStreamHost) === normalizeHost(config.serverUrl)
+  ) {
+    // 自分自身を指していると、front には無い /media-stream に繋ぎにいって通話が失敗する
     problems.push('APP_ROLE=front では MEDIA_STREAM_HOST に本体のホスト名が必要です。');
   }
 
@@ -126,7 +143,7 @@ export const buildPublicUrl = (config, pathname = '') => {
  */
 export const buildWebSocketUrl = (config, pathname, query = {}) => {
   // 接続先は自分自身とは限らない (front では本体のホストを指す)
-  const host = config.mediaStreamHost.replace(/^https?:\/\//, '');
+  const host = normalizeHost(config.mediaStreamHost);
   const search = new URLSearchParams(query).toString();
   return `wss://${host}${pathname}${search ? `?${search}` : ''}`;
 };

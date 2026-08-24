@@ -1,6 +1,12 @@
 import tap from 'tap';
 
-import { buildPublicUrl, buildWebSocketUrl, loadConfig, validateConfig } from '../src/config.js';
+import {
+  buildPublicUrl,
+  buildWebSocketUrl,
+  loadConfig,
+  normalizeHost,
+  validateConfig
+} from '../src/config.js';
 import { frontConfig, testConfig } from './helpers/config.js';
 
 tap.test('APP_ROLE', async (t) => {
@@ -39,8 +45,22 @@ tap.test('validateConfig', async (t) => {
   t.match(
     validateConfig(frontConfig({ MEDIA_STREAM_HOST: 'vcr.example.com' })),
     [/MEDIA_STREAM_HOST/],
-    'front が自分自身を指していたら設定ミス (無限に自分へ繋ぎにいく)'
+    'front が自分自身を指していたら設定ミス (front に /media-stream は無い)'
   );
+
+  // SERVER_URL はプロトコル付きも許容するので、素朴な文字列比較だとすり抜ける
+  for (const [serverUrl, mediaStreamHost, label] of [
+    ['https://vcr.example.com', 'vcr.example.com', 'SERVER_URL だけプロトコル付き'],
+    ['vcr.example.com', 'https://vcr.example.com', 'MEDIA_STREAM_HOST だけプロトコル付き'],
+    ['vcr.example.com/', 'vcr.example.com', '末尾スラッシュ'],
+    ['VCR.example.com', 'vcr.example.com', '大文字小文字']
+  ]) {
+    t.match(
+      validateConfig(frontConfig({ SERVER_URL: serverUrl, MEDIA_STREAM_HOST: mediaStreamHost })),
+      [/MEDIA_STREAM_HOST/],
+      `表記が違っても同じホストなら弾く: ${label}`
+    );
+  }
 
   t.match(validateConfig(testConfig({ SERVER_URL: undefined })), [/SERVER_URL/]);
   t.match(validateConfig(testConfig({ SERVER_URL: 'http://example.com' })), [/http:\/\//]);
@@ -60,4 +80,25 @@ tap.test('URL の組み立て', async (t) => {
     'wss://fly.example.com/media-stream?a=1'
   );
   t.equal(buildWebSocketUrl(config, '/media-stream'), 'wss://example.com/media-stream', 'クエリなし');
+
+  t.equal(
+    buildWebSocketUrl(frontConfig({ MEDIA_STREAM_HOST: 'https://Fly.Example.com/' }), '/media-stream'),
+    'wss://fly.example.com/media-stream',
+    'プロトコル・末尾スラッシュ・大文字を吸収する'
+  );
+});
+
+tap.test('normalizeHost', async (t) => {
+  for (const [input, expected] of [
+    ['https://example.com', 'example.com'],
+    ['http://example.com', 'example.com'],
+    ['HTTPS://Example.COM/', 'example.com'],
+    ['  example.com  ', 'example.com'],
+    ['example.com///', 'example.com'],
+    ['127.0.0.1:3000', '127.0.0.1:3000'],
+    [undefined, ''],
+    ['', '']
+  ]) {
+    t.equal(normalizeHost(input), expected, `${JSON.stringify(input)} -> ${JSON.stringify(expected)}`);
+  }
 });

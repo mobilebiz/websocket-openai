@@ -3,6 +3,25 @@ import tap from 'tap';
 import { buildServer } from '../src/server.js';
 import { frontConfig, testConfig, TEST_ENV } from './helpers/config.js';
 
+/**
+ * ウェイクアップ用の fetch を差し替える。
+ * これが無いと front の /answer が実際に外部へ HTTPS を投げてしまい、
+ * オフラインや DNS が遅い環境でテストが不安定になる。
+ * @returns {string[]} 呼ばれた URL
+ */
+const stubFetch = (t) => {
+  const calls = [];
+  const original = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    calls.push(String(url));
+    return { status: 200 };
+  };
+  t.teardown(() => {
+    globalThis.fetch = original;
+  });
+  return calls;
+};
+
 const config = testConfig();
 const fastify = buildServer(config);
 
@@ -149,6 +168,7 @@ tap.test('POST /connect の認証', async (t) => {
 });
 
 tap.test('APP_ROLE=front (VCR に置く前段)', async (t) => {
+  stubFetch(t); // /answer がウェイクアップを投げるため、外部通信を出さない
   const { buildServer: build } = await import('../src/server.js');
   const front = build(frontConfig());
   t.teardown(() => front.close());
@@ -183,16 +203,7 @@ tap.test('APP_ROLE=front (VCR に置く前段)', async (t) => {
 });
 
 tap.test('front は NCCO を返す前に本体を起こす', async (t) => {
-  const calls = [];
-  const originalFetch = globalThis.fetch;
-  globalThis.fetch = async (url) => {
-    calls.push(String(url));
-    return { status: 200 };
-  };
-  t.teardown(() => {
-    globalThis.fetch = originalFetch;
-  });
-
+  const calls = stubFetch(t);
   const { buildServer: build } = await import('../src/server.js');
 
   const front = build(frontConfig());
