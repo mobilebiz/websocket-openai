@@ -1,4 +1,4 @@
-import { buildWebSocketUrl } from '../config.js';
+import { buildWebSocketUrl, normalizeHost } from '../config.js';
 import { VONAGE_RATE } from '../audio/resample.js';
 
 /** 本体を起こすリクエストを諦めるまでの時間 */
@@ -17,8 +17,10 @@ const WAKE_TIMEOUT_MS = 10_000;
 const wakeMediaStreamHost = (config, log) => {
   if (config.appRole !== 'front') return;
 
-  const host = config.mediaStreamHost.replace(/^https?:\/\//, '');
-  const url = `https://${host}/_/health`;
+  // NCCO の組み立てと同じ正規化を通す。ここだけ素朴に置換すると
+  // `HTTPS://Fly.Example.com/` のような表記で壊れた URL になり、
+  // NCCO は正しいのにウェイクアップだけ失敗する
+  const url = `https://${normalizeHost(config.mediaStreamHost)}/_/health`;
 
   fetch(url, { signal: AbortSignal.timeout(WAKE_TIMEOUT_MS) })
     .then((response) => log.info({ url, status: response.status }, '本体を起こしました'))

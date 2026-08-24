@@ -213,6 +213,19 @@ tap.test('front は NCCO を返す前に本体を起こす', async (t) => {
 
   t.same(calls, ['https://fly.example.com/_/health'], '本体のヘルスチェックを叩く');
 
+  // NCCO と同じ正規化を通していないと壊れた URL になる
+  calls.length = 0;
+  const messyHost = build(frontConfig({ MEDIA_STREAM_HOST: '  HTTPS://Fly.Example.com/  ' }));
+  t.teardown(() => messyHost.close());
+  await messyHost.inject({ method: 'POST', url: '/answer', payload: {} });
+  await new Promise((resolve) => setImmediate(resolve));
+
+  t.same(
+    calls,
+    ['https://fly.example.com/_/health'],
+    'プロトコル・大文字・末尾スラッシュ・空白が混ざっていても正しい URL になる'
+  );
+
   // full では自分自身なので起こす必要がない
   calls.length = 0;
   const full = build(testConfig());
