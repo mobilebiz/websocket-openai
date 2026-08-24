@@ -11,7 +11,10 @@ primary_region = 'nrt'
 [http_service]
   internal_port = 3000
   force_https = true
-  auto_stop_machines = 'stop'
+  # 'stop' だとアイドル後の起動に約 8 秒かかり、Vonage の answer_url
+  # タイムアウト (5 秒・上限も 5 秒) に間に合わず着信が切断される。
+  # 'suspend' はメモリを保持したまま止めるので復帰が速い。
+  auto_stop_machines = 'suspend'
   auto_start_machines = true
   min_machines_running = 0
   processes = ['app']
