@@ -1,0 +1,34 @@
+# Vonage Cloud Runtime へのデプロイ設定。
+#
+# ここには NCCO を返すだけの前段 (APP_ROLE=front) を置く。
+# Vonage の answer_url には 5 秒の応答制限があり、Fly.io のマシンが
+# 停止していると起動が間に合わず通話が切断されるため、
+# 常時起動している VCR に answer_url を受けさせ、音声の WebSocket だけ
+# Fly.io へ繋がせる。
+#
+# デプロイ: vcr deploy
+project:
+    name: websocket-openai
+instance:
+    name: dev
+    runtime: nodejs22
+    region: aws.apse1
+    application-id: 8a000223-9f1e-48d2-9a51-d97adc05a86d
+    environment:
+        - name: APP_ROLE
+          value: front
+        # VCR 自身のホスト名 (answer_url として Vonage に登録する先)
+        - name: SERVER_URL
+          value: neru-708ae9ee-websocket-openai-dev.apse1.runtime.vonage.cloud
+        # 音声の WebSocket を繋ぎにいかせる本体 (Fly.io)
+        - name: MEDIA_STREAM_HOST
+          value: websocket-openai.fly.dev
+    entrypoint:
+        - node
+        - index.js
+debug:
+    name: debug
+    application-id: 8a000223-9f1e-48d2-9a51-d97adc05a86d
+    entrypoint:
+        - node
+        - index.js

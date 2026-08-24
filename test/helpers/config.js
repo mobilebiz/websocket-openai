@@ -14,3 +14,14 @@ export const TEST_ENV = {
 
 /** @param {Record<string, string>} [overrides] */
 export const testConfig = (overrides = {}) => loadConfig({ ...TEST_ENV, ...overrides });
+
+/** VCR に置く前段 (APP_ROLE=front) の設定 */
+export const frontConfig = (overrides = {}) =>
+  testConfig({
+    APP_ROLE: 'front',
+    SERVER_URL: 'vcr.example.com',
+    MEDIA_STREAM_HOST: 'fly.example.com',
+    OPENAI_API_KEY: undefined,
+    OPENAI_MODEL: undefined,
+    ...overrides
+  });
