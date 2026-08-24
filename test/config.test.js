@@ -63,7 +63,28 @@ tap.test('validateConfig', async (t) => {
   }
 
   t.match(validateConfig(testConfig({ SERVER_URL: undefined })), [/SERVER_URL/]);
+
+  // 真値だがホスト名としては空。通すと wss:///media-stream になる
+  for (const value of ['   ', 'https://', 'http://', '//']) {
+    t.match(
+      validateConfig(frontConfig({ MEDIA_STREAM_HOST: value })),
+      [/MEDIA_STREAM_HOST/],
+      `正規化すると空になる MEDIA_STREAM_HOST を弾く: ${JSON.stringify(value)}`
+    );
+  }
+  t.match(
+    validateConfig(testConfig({ MEDIA_STREAM_HOST: '   ' })),
+    [/MEDIA_STREAM_HOST/],
+    'full でも空のホスト名は弾く'
+  );
+  t.match(validateConfig(testConfig({ SERVER_URL: '   ' })), [/SERVER_URL/], '空白だけの SERVER_URL も弾く');
+
   t.match(validateConfig(testConfig({ SERVER_URL: 'http://example.com' })), [/http:\/\//]);
+  t.match(
+    validateConfig(testConfig({ SERVER_URL: '  HTTP://example.com  ' })),
+    [/http:\/\//],
+    '大文字や前後の空白があっても http:// を見逃さない'
+  );
 });
 
 tap.test('URL の組み立て', async (t) => {

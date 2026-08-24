@@ -101,25 +101,33 @@ export const normalizeHost = (value) =>
 export const validateConfig = (config) => {
   const problems = [];
 
+  // 生の値ではなく正規化後で判定する。'   ' や 'https://' は真値だが
+  // ホスト名としては空で、通すと wss:///media-stream を吐いてしまう
+  const serverHost = normalizeHost(config.serverUrl);
+  const mediaHost = normalizeHost(config.mediaStreamHost);
+
   // front は NCCO を返すだけなので OpenAI の設定を持たない
   if (config.appRole === 'full') {
     if (!config.openai.apiKey) problems.push('OPENAI_API_KEY が設定されていません。');
     if (!config.openai.model) problems.push('OPENAI_MODEL が設定されていません。');
-  } else if (
-    !config.mediaStreamHost ||
-    normalizeHost(config.mediaStreamHost) === normalizeHost(config.serverUrl)
-  ) {
+  } else if (!mediaHost || mediaHost === serverHost) {
     // 自分自身を指していると、front には無い /media-stream に繋ぎにいって通話が失敗する
     problems.push('APP_ROLE=front では MEDIA_STREAM_HOST に本体のホスト名が必要です。');
   }
 
-  if (!config.serverUrl) {
+  if (!serverHost) {
     problems.push('SERVER_URL が設定されていません。');
-  } else if (config.serverUrl.startsWith('http://')) {
-    // Vonage の NCCO で指定できる WebSocket は wss:// のみなので、
-    // ws:// を組み立てても接続できない。設定ミスとして弾く
-    problems.push('SERVER_URL に http:// は指定できません。https のホスト名を指定してください。');
+  } else {
+    if (/^http:\/\//i.test(String(config.serverUrl).trim())) {
+      // Vonage の NCCO で指定できる WebSocket は wss:// のみなので、
+      // ws:// を組み立てても接続できない。設定ミスとして弾く
+      problems.push('SERVER_URL に http:// は指定できません。https のホスト名を指定してください。');
+    }
+    if (!mediaHost) {
+      problems.push('MEDIA_STREAM_HOST がホスト名として空です。');
+    }
   }
+
   return problems;
 };
 
